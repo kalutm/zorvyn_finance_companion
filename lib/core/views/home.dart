@@ -1,5 +1,4 @@
 import 'package:finance_frontend/features/accounts/presentation/views/accounts_wrapper.dart';
-import 'package:finance_frontend/features/auth/presentation/components/confirmation_dialog.dart';
 import 'package:finance_frontend/features/categories/presentation/views/categories_wrapper.dart';
 import 'package:finance_frontend/features/settings/presentation/views/settings_view.dart';
 import 'package:finance_frontend/features/transactions/presentation/views/report_and_anlytics_wrapper.dart';
@@ -113,50 +112,6 @@ class _HomeState extends State<Home> {
               index: 4,
               onTap: _onItemTapped,
             ),
-
-            const Spacer(),
-
-            // Logout and Delete at the bottom
-            ListTile(
-              leading: Icon(
-                Icons.logout_rounded,
-                color: theme.colorScheme.onSurface.withAlpha(153),
-              ),
-              title: Text('Logout', style: theme.textTheme.bodyLarge),
-              onTap: () {
-                Navigator.of(context).pop(); // Close drawer
-                showDialog(
-                    context: context,
-                    builder:
-                        (context) => ConfirmationDialog(
-                          title: "Log out",
-                          content:
-                              "Are you sure that you want to log out",
-                          isDelete: false,
-                        ),
-                  );
-              },
-            ),
-            ListTile(
-              leading: Icon(
-               Icons.delete_forever, color: Colors.red
-              ),
-              title: Text('Delete Account', style: TextStyle(color: Colors.red)),
-              onTap: () {
-                Navigator.of(context).pop(); // Close drawer
-                showDialog(
-                    context: context,
-                    builder:
-                        (context) => ConfirmationDialog(
-                          title: "Delete Account",
-                          content:
-                              "Are you sure you want to delete your account? This cannot be undone.",
-                          isDelete: true,
-                        ),
-                  );
-              },
-            ),
-            const SizedBox(height: 20),
           ],
         ),
       ),
