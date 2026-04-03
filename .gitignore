@@ -1,0 +1,51 @@
+# -------------------------
+# Flutter / Dart
+# -------------------------
+.dart_tool/
+.packages
+.pub/
+.pub-cache/
+build/
+coverage/
+
+# Generated files
+.flutter-plugins
+.flutter-plugins-dependencies
+**/doc/api/
+**/ios/Flutter/.last_build_id
+
+# -------------------------
+# Android
+# -------------------------
+android/.gradle/
+android/local.properties
+android/app/build/
+*.keystore
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# -------------------------
+# iOS
+# -------------------------
+ios/Pods/
+ios/Flutter/ephemeral/
+ios/Runner.xcworkspace/
+
+# -------------------------
+# VS Code
+# -------------------------
+.vscode/
+
+# -------------------------
+# OS files
+# -------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------
+# Environment variables
+# -------------------------
+.env
+.env.*
