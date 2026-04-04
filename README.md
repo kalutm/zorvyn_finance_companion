@@ -46,27 +46,24 @@ Add screenshots below before submission.
 
 ### Home Dashboard
 
-`<<INSERT_SCREENSHOT_OR_IMAGE_LINK>>`
+![Screenshot_20260404_223648](https://github.com/user-attachments/assets/2dcf1871-c1c6-463e-9eaa-28b3f6471165)
 
 ### Transactions (List + Form + Filters)
 
-`<<INSERT_SCREENSHOT_OR_IMAGE_LINK>>`
+![Screenshot_20260404_223657](https://github.com/user-attachments/assets/0d87d0b3-92a9-408d-b56c-f0293ce39465)
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/a18b3721-7a81-43ae-85f8-c9ae851e76cf" />
 
 ### Budget Feature
 
-`<<INSERT_SCREENSHOT_OR_IMAGE_LINK>>`
+![Screenshot_20260404_223725](https://github.com/user-attachments/assets/4615179f-88ea-4606-9c06-959b5b2f3bae)
 
 ### Report & Anlytics Screen
 
-`<<INSERT_SCREENSHOT_OR_IMAGE_LINK>>`
+![Screenshot_20260404_223757](https://github.com/user-attachments/assets/5bdc9a23-22c1-4efa-90fc-bd54932940f6)
 
 ### Settings (Dark Mode + Biometric Toggle)
 
-`<<INSERT_SCREENSHOT_OR_IMAGE_LINK>>`
-
-### Settings (Load Demo Data)
-
-`<<INSERT_SCREENSHOT_OR_IMAGE_LINK>>`
+![Screenshot_20260404_223804](https://github.com/user-attachments/assets/cb86af6f-0ae8-4a2d-aa79-120c2ac1689f)
 
 ## Project Overview
 
