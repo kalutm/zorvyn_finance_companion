@@ -28,11 +28,12 @@ What I changed for this assessment-focused mobile submission:
 - Added and polished a dedicated budget feature as the goal/challenge functionality.
 - Refocused analytics/insights for better pattern visibility on small screens.
 - Added optional biometric app lock with in-app settings toggle.
+- Added a one-tap demo-data seeding action in Settings for quick testing/demo setup.
 - Preserved and polished dark mode and mobile-friendly interactions.
 
 ## Repository Link (Assessment Submission)
 
-- Mobile-only assessment repository: `<<PASTE_THIS_REPO_LINK_HERE>>`
+- Mobile-only assessment repository: https://github.com/kalutm/zorvyn_finance_companion
 
 ## Build / Demo Links
 
@@ -60,6 +61,10 @@ Add screenshots below before submission.
 `<<INSERT_SCREENSHOT_OR_IMAGE_LINK>>`
 
 ### Settings (Dark Mode + Biometric Toggle)
+
+`<<INSERT_SCREENSHOT_OR_IMAGE_LINK>>`
+
+### Settings (Load Demo Data)
 
 `<<INSERT_SCREENSHOT_OR_IMAGE_LINK>>`
 
@@ -125,6 +130,7 @@ The app is designed for everyday use with simple navigation, focused screens, an
 - Dark mode.
 - Biometric lock (optional toggle in settings).
 - Multi-currency-aware summaries in budget calculations.
+- Demo seed utility from Settings to populate realistic sample accounts/categories/budgets/transactions.
 
 ## Documentation Notes (Evaluation Criteria #8)
 
@@ -162,7 +168,7 @@ This README intentionally includes:
 ### 1) Clone
 
 ```bash
-git clone <<PASTE_THIS_REPO_LINK_HERE>>
+git clone https://github.com/kalutm/zorvyn_finance_companion
 cd finance_companion
 ```
 
@@ -200,7 +206,7 @@ Based on current `.gitignore` and project contents:
 - Categories
 - Budgets
 - Insights / Report & Analytics
-- Settings (Theme + Biometric Lock Toggle)
+- Settings (Theme + Biometric Lock Toggle + Load Demo Data)
 
 ## App Naming Note
 

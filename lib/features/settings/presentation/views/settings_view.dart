@@ -1,3 +1,4 @@
+import 'package:finance_frontend/core/dev/demo_data_seed.dart';
 import 'package:finance_frontend/core/provider/providers.dart';
 import 'package:finance_frontend/features/settings/presentation/cubits/settings_cubit.dart';
 import 'package:finance_frontend/features/settings/presentation/cubits/settings_state.dart';
@@ -16,6 +17,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   bool _isBiometricLockEnabled = true;
   bool _isBiometricLoading = true;
   bool _isUpdatingBiometric = false;
+  bool _isSeedingDemoData = false;
 
   @override
   void initState() {
@@ -50,6 +52,48 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     setState(() {
       _isUpdatingBiometric = false;
     });
+  }
+
+  Future<void> _seedDemoData() async {
+    if (_isSeedingDemoData) {
+      return;
+    }
+
+    setState(() {
+      _isSeedingDemoData = true;
+    });
+
+    try {
+      final result = await seedDemoData(
+        accountService: ref.read(accountServiceProvider),
+        categoryService: ref.read(categoryServiceProvider),
+        transactionService: ref.read(transactionServiceProvider),
+        budgetService: ref.read(budgetServiceProvider),
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.summary())));
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to seed demo data: $e')));
+    } finally {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isSeedingDemoData = false;
+      });
+    }
   }
 
   @override
@@ -96,6 +140,25 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                     : Icons.lock_open_rounded,
               ),
             ),
+          const Divider(height: 1),
+          ListTile(
+            leading: const Icon(Icons.science_rounded),
+            title: const Text('Load Demo Data'),
+            subtitle: const Text(
+              'Populate sample accounts, categories, budgets, and transactions for demos/testing.',
+            ),
+            trailing:
+                _isSeedingDemoData
+                    ? const SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                    : ElevatedButton(
+                      onPressed: _seedDemoData,
+                      child: const Text('Seed'),
+                    ),
+          ),
         ],
       ),
     );
