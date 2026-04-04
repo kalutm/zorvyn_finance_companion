@@ -121,7 +121,7 @@ class TransactionFormBloc
     if (e is CouldnotCreateTransferTransaction) return 'Couldnot create a the transfer transaction, please try again later';
     if (e is CouldnotGetTransaction) return 'Couldnot get transaction or Transaction not found';
     if (e is CouldnotUpdateTransaction) return 'Couldnot Update transaction or Transaction not found, please try again';
-    if (e is CannotUpdateTransferTransactions) return "Can't Update a Transfer Transaction";
+    if (e is CannotUpdateTransferTransactions) return "Transfer Transactions aren't editable, consider deleting this and creating a new one";
     if (e is CouldnotDeleteTransaction) return 'Couldnot Delete transaction or Transaction not found, please try again';
     if (e is InvalidTransferTransaction) return 'The transaction is invalid, Couldnot delete it';
     if (e is CouldnotDeleteTransferTransaction) return 'Couldnot Delete the transfer transaction, please try again later';
