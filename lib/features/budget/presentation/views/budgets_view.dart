@@ -69,6 +69,9 @@ class _BudgetsViewState extends ConsumerState<BudgetsView> {
     if (budget.accountId != null && tx.accountId != budget.accountId) {
       return false;
     }
+    if (tx.currency.toUpperCase() != budget.currency.toUpperCase()) {
+      return false;
+    }
     return true;
   }
 
@@ -129,15 +132,26 @@ class _BudgetsViewState extends ConsumerState<BudgetsView> {
       }
     }
 
-    Decimal totalBudgetLimit = Decimal.zero;
+    final totalBudgetLimitByCurrency = <String, Decimal>{};
+    final totalMonthlyExpenseByCurrency = <String, Decimal>{};
     int overLimitCount = 0;
     int warningCount = 0;
+
+    for (final tx in monthlyExpenses) {
+      final txCurrency = tx.currency.toUpperCase();
+      final txAmount = _safeDecimal(tx.amount);
+      totalMonthlyExpenseByCurrency[txCurrency] =
+          (totalMonthlyExpenseByCurrency[txCurrency] ?? Decimal.zero) +
+          txAmount;
+    }
 
     for (final budget in budgets.where((b) => b.active)) {
       final limit = _safeDecimal(budget.limitAmount);
       final spent = spentByBudgetId[budget.id] ?? Decimal.zero;
+      final budgetCurrency = budget.currency.toUpperCase();
 
-      totalBudgetLimit += limit;
+      totalBudgetLimitByCurrency[budgetCurrency] =
+          (totalBudgetLimitByCurrency[budgetCurrency] ?? Decimal.zero) + limit;
       if (limit <= Decimal.zero) {
         continue;
       }
@@ -153,17 +167,12 @@ class _BudgetsViewState extends ConsumerState<BudgetsView> {
       }
     }
 
-    final totalMonthlyExpense = monthlyExpenses.fold(
-      Decimal.zero,
-      (sum, tx) => sum + _safeDecimal(tx.amount),
-    );
-
     return _BudgetComputedData(
       spentByBudgetId: spentByBudgetId,
       categoryLabelById: {for (final c in categories) c.id: c.name},
       accountLabelById: {for (final a in accounts) a.id: a.name},
-      totalMonthlyExpense: totalMonthlyExpense,
-      totalBudgetLimit: totalBudgetLimit,
+      totalMonthlyExpenseByCurrency: totalMonthlyExpenseByCurrency,
+      totalBudgetLimitByCurrency: totalBudgetLimitByCurrency,
       overLimitCount: overLimitCount,
       warningCount: warningCount,
       categories: categories,
@@ -359,6 +368,14 @@ class _BudgetsViewState extends ConsumerState<BudgetsView> {
 
   Widget _buildSummaryCard(_BudgetComputedData data, int activeCount) {
     final theme = Theme.of(context);
+    final monthlyExpenseChips = _buildCurrencySummaryChips(
+      baseLabel: 'Monthly expense',
+      totalsByCurrency: data.totalMonthlyExpenseByCurrency,
+    );
+    final budgetLimitChips = _buildCurrencySummaryChips(
+      baseLabel: 'Budgeted limit',
+      totalsByCurrency: data.totalBudgetLimitByCurrency,
+    );
 
     return Card(
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 10),
@@ -378,14 +395,8 @@ class _BudgetsViewState extends ConsumerState<BudgetsView> {
               spacing: 10,
               runSpacing: 8,
               children: [
-                _SummaryChip(
-                  label: 'Monthly expense',
-                  value: _money(data.totalMonthlyExpense, 'ETB'),
-                ),
-                _SummaryChip(
-                  label: 'Budgeted limit',
-                  value: _money(data.totalBudgetLimit, 'ETB'),
-                ),
+                ...monthlyExpenseChips,
+                ...budgetLimitChips,
                 _SummaryChip(label: 'Active budgets', value: '$activeCount'),
                 _SummaryChip(
                   label: 'Near threshold',
@@ -401,6 +412,25 @@ class _BudgetsViewState extends ConsumerState<BudgetsView> {
         ),
       ),
     );
+  }
+
+  List<Widget> _buildCurrencySummaryChips({
+    required String baseLabel,
+    required Map<String, Decimal> totalsByCurrency,
+  }) {
+    if (totalsByCurrency.isEmpty) {
+      return [_SummaryChip(label: baseLabel, value: 'No data')];
+    }
+
+    final keys = totalsByCurrency.keys.toList()..sort();
+    return keys
+        .map(
+          (currency) => _SummaryChip(
+            label: '$baseLabel ($currency)',
+            value: _money(totalsByCurrency[currency] ?? Decimal.zero, currency),
+          ),
+        )
+        .toList();
   }
 
   Widget _buildSearchBar() {
@@ -588,8 +618,8 @@ class _BudgetComputedData {
   final Map<String, Decimal> spentByBudgetId;
   final Map<String, String> categoryLabelById;
   final Map<String, String> accountLabelById;
-  final Decimal totalMonthlyExpense;
-  final Decimal totalBudgetLimit;
+  final Map<String, Decimal> totalMonthlyExpenseByCurrency;
+  final Map<String, Decimal> totalBudgetLimitByCurrency;
   final int overLimitCount;
   final int warningCount;
   final List<FinanceCategory> categories;
@@ -599,8 +629,8 @@ class _BudgetComputedData {
     required this.spentByBudgetId,
     required this.categoryLabelById,
     required this.accountLabelById,
-    required this.totalMonthlyExpense,
-    required this.totalBudgetLimit,
+    required this.totalMonthlyExpenseByCurrency,
+    required this.totalBudgetLimitByCurrency,
     required this.overLimitCount,
     required this.warningCount,
     required this.categories,
@@ -612,8 +642,8 @@ class _BudgetComputedData {
       spentByBudgetId: {},
       categoryLabelById: {},
       accountLabelById: {},
-      totalMonthlyExpense: Decimal.zero,
-      totalBudgetLimit: Decimal.zero,
+      totalMonthlyExpenseByCurrency: {},
+      totalBudgetLimitByCurrency: {},
       overLimitCount: 0,
       warningCount: 0,
       categories: [],

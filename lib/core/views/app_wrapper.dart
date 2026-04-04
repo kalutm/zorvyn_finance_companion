@@ -1,6 +1,7 @@
 import 'package:finance_frontend/core/provider/providers.dart';
 import 'package:finance_frontend/core/views/home.dart';
 import 'package:finance_frontend/features/accounts/presentation/blocs/accounts/accounts_bloc.dart';
+import 'package:finance_frontend/features/biometrics/presentation/views/biometric_lock_gate.dart';
 import 'package:finance_frontend/features/budget/presentation/blocs/budgets/budgets_bloc.dart';
 import 'package:finance_frontend/features/categories/presentation/blocs/categories/categories_bloc.dart';
 import 'package:finance_frontend/features/transactions/presentation/bloc/transaction_form/transaction_form_bloc.dart';
@@ -62,7 +63,7 @@ class _AppWrapperState extends ConsumerState<AppWrapper> {
                     ReportAnalyticsCubit(ref.read(transactionServiceProvider)),
           ),
         ],
-        child: const Home(),
+        child: const BiometricLockGate(child: Home()),
       ),
     );
   }

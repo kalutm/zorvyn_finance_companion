@@ -19,6 +19,8 @@ import 'package:finance_frontend/features/transactions/data/data_sources/hive_tr
 
 import 'package:finance_frontend/features/budget/domain/service/budget_service.dart'; // BudgetService
 import 'package:finance_frontend/features/budget/data/services/hive_budget_service.dart'; // HiveBudgetService
+import 'package:finance_frontend/features/biometrics/domain/services/biometric_auth_service.dart'; // BiometricAuthService
+import 'package:finance_frontend/features/biometrics/data/services/local_biometric_auth_service.dart'; // LocalBiometricAuthService
 
 // Blocs / Cubits
 import 'package:finance_frontend/features/settings/presentation/cubits/settings_cubit.dart'; // SettingsCubit
@@ -60,6 +62,11 @@ final transDataSourceProvider = Provider<TransDataSource>((ref) {
 /// HiveBudgetService exposed as BudgetService (interface)
 final budgetServiceProvider = Provider<BudgetService>((ref) {
   return HiveBudgetService();
+});
+
+/// LocalBiometricAuthService exposed as BiometricAuthService (interface)
+final biometricAuthServiceProvider = Provider<BiometricAuthService>((ref) {
+  return LocalBiometricAuthService();
 });
 
 /// FinanceTransactionService exposed as TransactionService (interface)
