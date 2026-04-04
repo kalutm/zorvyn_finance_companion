@@ -38,7 +38,7 @@ What I changed for this assessment-focused mobile submission:
 ## Build / Demo Links
 
 - Android build artifact (APK): https://github.com/kalutm/zorvyn_finance_companion/releases/tag/finance_companion
-- Demo video: `<<PASTE_DEMO_VIDEO_LINK_HERE>>`
+- Demo video: https://github.com/kalutm/zorvyn_finance_companion/releases/tag/demo_video
 
 ## Screenshots Placeholder
 
