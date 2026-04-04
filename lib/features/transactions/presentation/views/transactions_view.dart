@@ -32,6 +32,8 @@ class TransactionsView extends StatefulWidget {
 class _TransactionsViewState extends State<TransactionsView> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _searchDebounce;
+  int _selectedInsightIndex = 0;
+  bool _showAllRecent = false;
 
   @override
   void dispose() {
@@ -181,10 +183,6 @@ class _TransactionsViewState extends State<TransactionsView> {
                 ),
                 _OverviewMetricsSection(metrics: metrics),
                 const SizedBox(height: 16),
-                _SavingsProgressSection(metrics: metrics),
-                const SizedBox(height: 16),
-                _WeeklyTrendSection(points: trend, currency: metrics.currency),
-                const SizedBox(height: 16),
                 BlocBuilder<CategoriesBloc, CategoriesState>(
                   builder: (context, categoriesState) {
                     final categoryNames = _categoryNames(categoriesState);
@@ -192,8 +190,15 @@ class _TransactionsViewState extends State<TransactionsView> {
                       transactions,
                       categoryNames,
                     );
-                    return _CategoryBreakdownSection(
-                      items: breakdown,
+                    return _InsightsSection(
+                      selectedIndex: _selectedInsightIndex,
+                      onSelected: (index) {
+                        setState(() {
+                          _selectedInsightIndex = index;
+                        });
+                      },
+                      trendPoints: trend,
+                      breakdownItems: breakdown,
                       currency: metrics.currency,
                     );
                   },
@@ -202,6 +207,12 @@ class _TransactionsViewState extends State<TransactionsView> {
                 _RecentActivitySection(
                   transactions: transactions,
                   selectedAccount: selectedAccount,
+                  showAll: _showAllRecent,
+                  onToggle: () {
+                    setState(() {
+                      _showAllRecent = !_showAllRecent;
+                    });
+                  },
                 ),
               ],
             ),
@@ -595,91 +606,112 @@ class _OverviewMetricsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final savingsColor =
-        metrics.savings.sign >= 0 ? Colors.green : Colors.redAccent;
-
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children:
-          [
-                _MetricCard(
-                  label: 'Total Income',
-                  value: _formatMoney(metrics.income, metrics.currency),
-                  icon: Icons.trending_up_rounded,
-                  color: Colors.green,
-                ),
-                _MetricCard(
-                  label: 'Total Expenses',
-                  value: _formatMoney(metrics.expense, metrics.currency),
-                  icon: Icons.trending_down_rounded,
-                  color: Colors.redAccent,
-                ),
-                _MetricCard(
-                  label: 'Savings',
-                  value: _formatMoney(metrics.savings, metrics.currency),
-                  icon: Icons.savings_rounded,
-                  color: savingsColor,
-                ),
-                _MetricCard(
-                  label: 'Transactions',
-                  value: '${metrics.transactionsCount}',
-                  icon: Icons.receipt_long_rounded,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ]
-              .map(
-                (card) => SizedBox(
-                  width: (MediaQuery.of(context).size.width - 44) / 2,
-                  child: card,
-                ),
-              )
-              .toList(),
-    );
-  }
-}
-
-class _SavingsProgressSection extends StatelessWidget {
-  final _DashboardMetrics metrics;
-
-  const _SavingsProgressSection({required this.metrics});
-
-  @override
-  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final pct = metrics.savingsRate;
+    final savingsColor = metrics.savings.sign >= 0 ? Colors.green : Colors.redAccent;
 
     return Card(
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Savings Progress',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: _MiniMetric(
+                    label: 'Income',
+                    value: _formatMoney(metrics.income, metrics.currency),
+                    color: Colors.green,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _MiniMetric(
+                    label: 'Expense',
+                    value: _formatMoney(metrics.expense, metrics.currency),
+                    color: Colors.redAccent,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _MiniMetric(
+                    label: 'Savings',
+                    value: _formatMoney(metrics.savings, metrics.currency),
+                    color: savingsColor,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              '${(pct * 100).toStringAsFixed(1)}% of income retained',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withAlpha(178),
-              ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(
+                  Icons.receipt_long_rounded,
+                  size: 16,
+                  color: theme.colorScheme.onSurface.withAlpha(170),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '${metrics.transactionsCount} transactions',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withAlpha(178),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: LinearProgressIndicator(
-                minHeight: 12,
-                value: pct,
+                minHeight: 8,
+                value: metrics.savingsRate,
                 backgroundColor: theme.colorScheme.surfaceContainerHighest,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _InsightsSection extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+  final List<_TrendPoint> trendPoints;
+  final List<_BreakdownItem> breakdownItems;
+  final String currency;
+
+  const _InsightsSection({
+    required this.selectedIndex,
+    required this.onSelected,
+    required this.trendPoints,
+    required this.breakdownItems,
+    required this.currency,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SegmentedButton<int>(
+          segments: const [
+            ButtonSegment(value: 0, label: Text('Trend')),
+            ButtonSegment(value: 1, label: Text('Categories')),
+          ],
+          selected: {selectedIndex},
+          onSelectionChanged: (selected) {
+            onSelected(selected.first);
+          },
+        ),
+        const SizedBox(height: 10),
+        if (selectedIndex == 0)
+          _WeeklyTrendSection(points: trendPoints, currency: currency)
+        else
+          _CategoryBreakdownSection(items: breakdownItems, currency: currency),
+      ],
     );
   }
 }
@@ -869,10 +901,14 @@ class _CategoryBreakdownSection extends StatelessWidget {
 class _RecentActivitySection extends StatelessWidget {
   final List<Transaction> transactions;
   final Account? selectedAccount;
+  final bool showAll;
+  final VoidCallback onToggle;
 
   const _RecentActivitySection({
     required this.transactions,
     required this.selectedAccount,
+    required this.showAll,
+    required this.onToggle,
   });
 
   @override
@@ -882,12 +918,30 @@ class _RecentActivitySection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                selectedAccount == null
+                    ? 'Recent Activity'
+                    : 'Recent Activity • ${selectedAccount!.name}',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            if (transactions.length > 3)
+              TextButton(
+                onPressed: onToggle,
+                child: Text(showAll ? 'Show less' : 'Show more'),
+              ),
+          ],
+        ),
+        const SizedBox(height: 6),
         Text(
-          selectedAccount == null
-              ? 'Recent Activity'
-              : 'Recent Activity • ${selectedAccount!.name}',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
+          showAll ? 'All matching transactions' : 'Latest 3 transactions',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withAlpha(170),
           ),
         ),
         const SizedBox(height: 10),
@@ -916,23 +970,21 @@ class _RecentActivitySection extends StatelessWidget {
           )
         else
           ...transactions
-              .take(8)
+              .take(showAll ? 8 : 3)
               .map((tx) => TransactionListItem(transaction: tx)),
       ],
     );
   }
 }
 
-class _MetricCard extends StatelessWidget {
+class _MiniMetric extends StatelessWidget {
   final String label;
   final String value;
-  final IconData icon;
   final Color color;
 
-  const _MetricCard({
+  const _MiniMetric({
     required this.label,
     required this.value,
-    required this.icon,
     required this.color,
   });
 
@@ -941,29 +993,30 @@ class _MetricCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        color: color.withAlpha(18),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withAlpha(60)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 8),
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withAlpha(178),
+              color: color,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             value,
-            style: theme.textTheme.titleMedium?.copyWith(
+            style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w800,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
