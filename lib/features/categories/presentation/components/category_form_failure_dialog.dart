@@ -50,7 +50,7 @@ class CategoryFailureDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Please check your input or network connection and try again.',
+              'Please check your input and try again.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurface.withAlpha(178),
               ),
