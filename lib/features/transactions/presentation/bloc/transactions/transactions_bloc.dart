@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
+import 'package:finance_frontend/features/accounts/domain/entities/account.dart';
+import 'package:finance_frontend/features/transactions/data/model/dtos/date_range.dart';
 import 'package:finance_frontend/features/transactions/domain/exceptions/transaction_exceptions.dart';
 import 'package:finance_frontend/features/transactions/domain/entities/transaction.dart';
 import 'package:finance_frontend/features/transactions/domain/service/transaction_service.dart';
@@ -13,19 +15,30 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
   final TransactionService transactionService;
   StreamSubscription<List<Transaction>>? _txSub;
 
-  List<Transaction> _cachedTransactions = [];
+  List<Transaction> _lastTransactions = [];
+  Account? _selectedAccount;
+  String _searchQuery = '';
+  DateRange? _range;
 
-  TransactionsBloc(this.transactionService) : super(const TransactionsInitial()) {
+  TransactionsBloc(this.transactionService)
+    : super(const TransactionsInitial()) {
     on<LoadTransactions>(_onLoadTransactions, transformer: droppable());
     on<RefreshTransactions>(_onRefreshTransactions, transformer: droppable());
     on<TransactionsUpdated>(_onTransactionsUpdated);
     on<TransactionFilterChanged>(_onTransactionFilterChanged);
+    on<TransactionSearchChanged>(_onTransactionSearchChanged);
+    on<TransactionDateRangeChanged>(_onTransactionDateRangeChanged);
+    on<TransactionFiltersCleared>(_onTransactionFiltersCleared);
 
     // subscribe to service stream
     _txSub = transactionService.transactionsStream.listen(
       (txs) => add(TransactionsUpdated(txs)),
       onError: (err, st) {
-        developer.log('TransactionService stream error', error: err, stackTrace: st);
+        developer.log(
+          'TransactionService stream error',
+          error: err,
+          stackTrace: st,
+        );
       },
     );
 
@@ -36,180 +49,103 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     LoadTransactions event,
     Emitter<TransactionsState> emit,
   ) async {
-    emit(const TransactionsLoading());
-    try {
-      final transactions = await transactionService.getUserTransactions();
-      _cachedTransactions = transactions;
-      emit(TransactionsLoaded(List.unmodifiable(_cachedTransactions)));
-    } catch (e) {
-      emit(
-        TransactionOperationFailure(
-          transactions: _cachedTransactions,
-          message: _mapErrorToMessage(e),
-        ),
-      );
-    }
+    await _loadFromDataSource(emit, showLoading: true);
   }
 
   Future<void> _onRefreshTransactions(
     RefreshTransactions event,
     Emitter<TransactionsState> emit,
   ) async {
-    final prevState = state;
-    emit(const TransactionsLoading());
-    try {
-      final transactions = await transactionService.getUserTransactions();
-      _cachedTransactions = transactions;
-      _emitFilteredTransactionsLoaded(emit, prevState);
-    } catch (e, st) {
-      developer.log('LoadTransactions error', error: e, stackTrace: st);
-      _emitFilteredTransactionOperationFailure(emit, prevState, e);
-    }
+    await _loadFromDataSource(emit, showLoading: true);
   }
 
   Future<void> _onTransactionsUpdated(
     TransactionsUpdated event,
     Emitter<TransactionsState> emit,
   ) async {
-    _cachedTransactions = event.transactions;
-
-    // preserve any existing filter from current state
-    final prevState = state;
-    _emitFilteredTransactionsLoaded(emit, prevState);
+    await _loadFromDataSource(emit, showLoading: false);
   }
 
   Future<void> _onTransactionFilterChanged(
     TransactionFilterChanged event,
     Emitter<TransactionsState> emit,
   ) async {
-    final account = event.account;
-    if (account != null) {
-      final filtered = List<Transaction>.from(_cachedTransactions);
+    _selectedAccount = event.account;
+    await _loadFromDataSource(emit);
+  }
+
+  Future<void> _onTransactionSearchChanged(
+    TransactionSearchChanged event,
+    Emitter<TransactionsState> emit,
+  ) async {
+    _searchQuery = event.query.trim();
+    await _loadFromDataSource(emit);
+  }
+
+  Future<void> _onTransactionDateRangeChanged(
+    TransactionDateRangeChanged event,
+    Emitter<TransactionsState> emit,
+  ) async {
+    _range = event.range;
+    await _loadFromDataSource(emit);
+  }
+
+  Future<void> _onTransactionFiltersCleared(
+    TransactionFiltersCleared event,
+    Emitter<TransactionsState> emit,
+  ) async {
+    _searchQuery = '';
+    _range = null;
+    await _loadFromDataSource(emit);
+  }
+
+  Future<void> _loadFromDataSource(
+    Emitter<TransactionsState> emit, {
+    bool showLoading = false,
+  }) async {
+    if (showLoading) {
+      emit(const TransactionsLoading());
+    }
+
+    try {
+      final transactions = await transactionService.searchTransactions(
+        accountId: _selectedAccount?.id,
+        query: _searchQuery,
+        range: _range,
+      );
+
+      _lastTransactions = transactions;
+
       emit(
         TransactionsLoaded(
-          List.unmodifiable(
-            filtered.where((txn) => txn.accountId == account.id),
-          ),
-          account,
+          List.unmodifiable(transactions),
+          _selectedAccount,
+          _searchQuery,
+          _range,
         ),
       );
-    } else {
-      emit(TransactionsLoaded(List.unmodifiable(_cachedTransactions)));
-    }
-  }
-
-  String _mapErrorToMessage(Object e) {
-    if (e is CouldnotFetchTransactions) return 'Couldnot fetch transactions, please try reloading the page';
-    if (e is SocketException) return 'No Internet connection!, please try connecting to the internet';
-    return e.toString();
-  }
-
-  _emitFilteredTransactionsLoaded(
-    Emitter<TransactionsState> emit,
-    TransactionsState prevState,
-  ) {
-    if (prevState is TransactionsLoaded) {
-      final account = prevState.account;
-      if (account != null) {
-        final accountId = account.id;
-        final filtered = List<Transaction>.from(_cachedTransactions);
-        emit(
-          TransactionsLoaded(
-            List.unmodifiable(
-              filtered.where(
-                (transaction) => transaction.accountId == accountId,
-              ),
-            ),
-            account,
-          ),
-        );
-      } else {
-        emit(TransactionsLoaded(List.unmodifiable(_cachedTransactions)));
-      }
-    } else if (prevState is TransactionOperationFailure) {
-      final account = prevState.account;
-      if (account != null) {
-        final accountId = account.id;
-        final filtered = List<Transaction>.from(_cachedTransactions);
-        emit(
-          TransactionsLoaded(
-            List.unmodifiable(
-              filtered.where(
-                (transaction) => transaction.accountId == accountId,
-              ),
-            ),
-            account,
-          ),
-        );
-      } else {
-        emit(TransactionsLoaded(List.unmodifiable(_cachedTransactions)));
-      }
-    } else {
-      emit(TransactionsLoaded(List.unmodifiable(_cachedTransactions)));
-    }
-  }
-
-  _emitFilteredTransactionOperationFailure(
-    Emitter<TransactionsState> emit,
-    TransactionsState prevState,
-    Object e,
-  ) {
-    if (prevState is TransactionsLoaded) {
-      final account = prevState.account;
-      if (account != null) {
-        final accountId = account.id;
-        final filtered = List<Transaction>.from(_cachedTransactions);
-        emit(
-          TransactionOperationFailure(
-            transactions: List.unmodifiable(
-              filtered.where(
-                (transaction) => transaction.accountId == accountId,
-              ),
-            ),
-            account: account,
-            message: _mapErrorToMessage(e),
-          ),
-        );
-      } else {
-        emit(
-          TransactionOperationFailure(
-            transactions: List.unmodifiable(_cachedTransactions),
-            message: _mapErrorToMessage(e),
-          ),
-        );
-      }
-    } else if (prevState is TransactionOperationFailure) {
-      final account = prevState.account;
-      if (account != null) {
-        final accountId = account.id;
-        final filtered = List<Transaction>.from(_cachedTransactions);
-        emit(
-          TransactionOperationFailure(
-            transactions: List.unmodifiable(
-              filtered.where(
-                (transaction) => transaction.accountId == accountId,
-              ),
-            ),
-            account: account,
-            message: _mapErrorToMessage(e),
-          ),
-        );
-      } else {
-        emit(
-          TransactionOperationFailure(
-            transactions: List.unmodifiable(_cachedTransactions),
-            message: _mapErrorToMessage(e),
-          ),
-        );
-      }
-    } else {
+    } catch (e, st) {
+      developer.log('LoadTransactions error', error: e, stackTrace: st);
       emit(
         TransactionOperationFailure(
-          transactions: List.unmodifiable(_cachedTransactions),
+          transactions: List.unmodifiable(_lastTransactions),
+          account: _selectedAccount,
+          searchQuery: _searchQuery,
+          range: _range,
           message: _mapErrorToMessage(e),
         ),
       );
     }
+  }
+
+  String _mapErrorToMessage(Object e) {
+    if (e is CouldnotFetchTransactions) {
+      return 'Couldnot fetch transactions, please try reloading the page';
+    }
+    if (e is SocketException) {
+      return 'No Internet connection!, please try connecting to the internet';
+    }
+    return e.toString();
   }
 
   @override

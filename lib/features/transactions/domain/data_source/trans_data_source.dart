@@ -18,20 +18,25 @@ abstract class TransDataSource {
   Future<void> deleteTransferTransaction(String transferGroupId);
   Future<TransactionModel> getTransaction(String id);
   Future<List<TransactionModel>> getUserTransactions();
+  Future<List<TransactionModel>> searchTransactions({
+    String? accountId,
+    String? query,
+    DateRange? range,
+  });
   Future<TransactionModel> updateTransaction(String id, TransactionPatch patch);
   Future<BulkResult> createBulkTransactions(
     List<TransactionCreate> transactions,
   );
 
   // report and analytic's method's
-  Future<List<TransactionModel>> listTransactionsForReport(ListTransactionsIn listTransactionsIn);
+  Future<List<TransactionModel>> listTransactionsForReport(
+    ListTransactionsIn listTransactionsIn,
+  );
   Future<Map<String, dynamic>> getTransactionSummaryFromMonth(String month);
   Future<Map<String, dynamic>> getTransactionSummaryFromDateRange(
     DateRange range,
   );
-  Future<List<Map<String, dynamic>>> getTransactionStats(
-    StatsIn statsIn,
-  );
+  Future<List<Map<String, dynamic>>> getTransactionStats(StatsIn statsIn);
   Future<List<Map<String, dynamic>>> getTransactionTimeSeries(
     TimeSeriesIn timeSeriesIn,
   );

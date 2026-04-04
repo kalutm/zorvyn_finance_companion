@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:finance_frontend/features/accounts/domain/entities/account.dart';
+import 'package:finance_frontend/features/transactions/data/model/dtos/date_range.dart';
 import 'package:finance_frontend/features/transactions/domain/entities/transaction.dart';
 import 'package:flutter/foundation.dart';
 
@@ -24,6 +25,26 @@ class TransactionFilterChanged extends TransactionsEvent {
 
   @override
   List<Object?> get props => [account];
+}
+
+class TransactionSearchChanged extends TransactionsEvent {
+  final String query;
+  const TransactionSearchChanged(this.query);
+
+  @override
+  List<Object?> get props => [query];
+}
+
+class TransactionDateRangeChanged extends TransactionsEvent {
+  final DateRange? range;
+  const TransactionDateRangeChanged(this.range);
+
+  @override
+  List<Object?> get props => [range?.start, range?.end];
+}
+
+class TransactionFiltersCleared extends TransactionsEvent {
+  const TransactionFiltersCleared();
 }
 
 class TransactionsUpdated extends TransactionsEvent {

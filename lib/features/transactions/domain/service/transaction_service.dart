@@ -18,6 +18,12 @@ import 'package:finance_frontend/features/transactions/domain/entities/transacti
 abstract class TransactionService {
   Future<List<Transaction>> getUserTransactions();
 
+  Future<List<Transaction>> searchTransactions({
+    String? accountId,
+    String? query,
+    DateRange? range,
+  });
+
   Stream<List<Transaction>> get transactionsStream;
 
   Stream<ReportAnalyticsIn> get reportAnalyticsInStream;

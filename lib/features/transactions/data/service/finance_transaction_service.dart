@@ -84,6 +84,20 @@ class FinanceTransactionService implements TransactionService {
   }
 
   @override
+  Future<List<Transaction>> searchTransactions({
+    String? accountId,
+    String? query,
+    DateRange? range,
+  }) async {
+    final transactions = await source.searchTransactions(
+      accountId: accountId,
+      query: query,
+      range: range,
+    );
+    return transactions.map((t) => t.toEntity()).toList();
+  }
+
+  @override
   Future<Transaction> createTransaction(TransactionCreate create) async {
     final dto = await source.createTransaction(create);
     final entity = dto.toEntity();
@@ -289,7 +303,7 @@ class FinanceTransactionService implements TransactionService {
       statsIn: _cachedReportAnalyticsParams.statsIn,
       timeSeriesIn: timeSeriesIn,
     );
-  _cachedReportAnalyticsParams = reportAnalyticsIn;
+    _cachedReportAnalyticsParams = reportAnalyticsIn;
     final timeSeriesList = await source.getTransactionTimeSeries(timeSeriesIn);
     return timeSeriesList
         .map((ts) => TransactionTimeSeries.fromJson(ts))
@@ -313,7 +327,8 @@ class FinanceTransactionService implements TransactionService {
   // close stream when app disposes
   void dispose() {
     if (!_controller.isClosed) _controller.close();
-    if (!_reportAnalyticsInController.isClosed) _reportAnalyticsInController.close();
-      _debounceTimer?.cancel();
+    if (!_reportAnalyticsInController.isClosed)
+      _reportAnalyticsInController.close();
+    _debounceTimer?.cancel();
   }
 }

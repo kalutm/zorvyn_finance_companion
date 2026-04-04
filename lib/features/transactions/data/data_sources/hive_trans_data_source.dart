@@ -225,6 +225,29 @@ class HiveTransDataSource implements TransDataSource {
     return model.type == TransactionType.TRANSFER && model.isOutGoing == true;
   }
 
+  bool _matchesQuery(TransactionModel transaction, String normalizedQuery) {
+    if (normalizedQuery.isEmpty) {
+      return true;
+    }
+
+    final description = (transaction.description ?? '').toLowerCase();
+    final merchant = (transaction.merchant ?? '').toLowerCase();
+    final amount = transaction.amount.toLowerCase();
+
+    if (description.contains(normalizedQuery) ||
+        merchant.contains(normalizedQuery) ||
+        amount.contains(normalizedQuery)) {
+      return true;
+    }
+
+    try {
+      final queryAmount = Decimal.parse(normalizedQuery.replaceAll(',', ''));
+      return _parseAmount(transaction.amount) == queryAmount;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Map<String, dynamic> _summaryFromTransactions(
     List<TransactionModel> transactions,
   ) {
@@ -469,6 +492,37 @@ class HiveTransDataSource implements TransDataSource {
   Future<List<TransactionModel>> getUserTransactions() async {
     try {
       return await _allTransactions();
+    } on TransactionException {
+      rethrow;
+    } catch (_) {
+      throw CouldnotFetchTransactions();
+    }
+  }
+
+  @override
+  Future<List<TransactionModel>> searchTransactions({
+    String? accountId,
+    String? query,
+    DateRange? range,
+  }) async {
+    try {
+      final normalizedQuery = (query ?? '').trim().toLowerCase();
+
+      final filtered =
+          (await _allTransactions()).where((transaction) {
+            if (accountId != null && transaction.accountId != accountId) {
+              return false;
+            }
+
+            if (range != null &&
+                !_inRange(_toDate(transaction.occuredAt), range)) {
+              return false;
+            }
+
+            return _matchesQuery(transaction, normalizedQuery);
+          }).toList();
+
+      return _sortedTransactions(filtered);
     } on TransactionException {
       rethrow;
     } catch (_) {
