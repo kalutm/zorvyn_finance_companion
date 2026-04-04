@@ -251,7 +251,7 @@ class _TransactionsViewState extends State<TransactionsView> {
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
                 prefixIcon: const Icon(Icons.search_rounded),
-                hintText: 'Search description, merchant, or amount',
+                hintText: 'description, merchant, or amount',
                 suffixIcon:
                     searchQuery.isNotEmpty
                         ? IconButton(

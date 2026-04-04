@@ -1,24 +1,21 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
-import 'package:syncfusion_flutter_charts/charts.dart';
-
-import 'package:finance_frontend/features/transactions/presentation/cubits/report_analytics_cubit.dart';
-import 'package:finance_frontend/features/transactions/presentation/cubits/report_analytics_state.dart';
-import 'package:finance_frontend/features/transactions/presentation/cubits/report_analytics_loading_enum.dart';
-import 'package:finance_frontend/features/transactions/data/model/report_analytics.dart';
-import 'package:finance_frontend/features/transactions/data/model/transaction_summary.dart';
-import 'package:finance_frontend/features/transactions/data/model/transaction_stats.dart';
-import 'package:finance_frontend/features/transactions/data/model/transaction_time_series.dart';
-import 'package:finance_frontend/features/transactions/data/model/account_balances.dart';
-import 'package:finance_frontend/features/transactions/domain/entities/transaction.dart';
-import 'package:finance_frontend/features/transactions/domain/entities/transaction_type.dart';
-import 'package:finance_frontend/features/transactions/domain/entities/granulity_enum.dart';
-import 'package:finance_frontend/features/transactions/domain/entities/filter_on_enum.dart';
 import 'package:finance_frontend/features/transactions/data/model/dtos/date_range.dart';
 import 'package:finance_frontend/features/transactions/data/model/dtos/stats_in.dart';
 import 'package:finance_frontend/features/transactions/data/model/dtos/time_series_in.dart';
 import 'package:finance_frontend/features/transactions/data/model/list_transactions_in.dart';
+import 'package:finance_frontend/features/transactions/data/model/report_analytics.dart';
+import 'package:finance_frontend/features/transactions/data/model/transaction_stats.dart';
+import 'package:finance_frontend/features/transactions/data/model/transaction_time_series.dart';
+import 'package:finance_frontend/features/transactions/domain/entities/filter_on_enum.dart';
+import 'package:finance_frontend/features/transactions/domain/entities/granulity_enum.dart';
+import 'package:finance_frontend/features/transactions/domain/entities/transaction.dart';
+import 'package:finance_frontend/features/transactions/domain/entities/transaction_type.dart';
+import 'package:finance_frontend/features/transactions/presentation/cubits/report_analytics_cubit.dart';
+import 'package:finance_frontend/features/transactions/presentation/cubits/report_analytics_loading_enum.dart';
+import 'package:finance_frontend/features/transactions/presentation/cubits/report_analytics_state.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 
 class ReportAndAnlyticsView extends StatefulWidget {
   const ReportAndAnlyticsView({super.key});
@@ -29,29 +26,6 @@ class ReportAndAnlyticsView extends StatefulWidget {
 
 class _ReportAndAnlyticsViewState extends State<ReportAndAnlyticsView> {
   late DateTime _selectedMonth;
-  Granulity _granularity = Granulity.day;
-
-  String _formatMonthParam(DateTime date) => DateFormat('yyyy-MM').format(date);
-
-  DateRange _getMonthRange(DateTime date) {
-    return DateRange(
-      start: DateTime(date.year, date.month, 1),
-      end: DateTime(date.year, date.month + 1, 0),
-    );
-  }
-
-  Future<void> _refreshAllForMonth() async {
-    final cubit = context.read<ReportAnalyticsCubit>();
-    // Prevent infinite loading if already busy
-    if (cubit.state is ReportAnalyticsPartLoading) return;
-
-    final range = _getMonthRange(_selectedMonth);
-    cubit.getTransactionSummary(_formatMonthParam(_selectedMonth), range);
-    cubit.getTransactionStats(StatsIn(filterOn: FilterOn.category, range: range));
-    cubit.getTransactionTimeSeries(TimeSeriesIn(granulity: _granularity, range: range));
-    cubit.getTransactionsForReport(ListTransactionsIn(range: range));
-    cubit.getAccountBalances();
-  }
 
   @override
   void initState() {
@@ -59,327 +33,124 @@ class _ReportAndAnlyticsViewState extends State<ReportAndAnlyticsView> {
     super.initState();
   }
 
+  String _formatMonthParam(DateTime date) => DateFormat('yyyy-MM').format(date);
+
+  DateRange _monthRange(DateTime date) {
+    return DateRange(
+      start: DateTime(date.year, date.month, 1),
+      end: DateTime(date.year, date.month + 1, 0, 23, 59, 59),
+    );
+  }
+
+  Future<void> _refreshInsightsForMonth() async {
+    final cubit = context.read<ReportAnalyticsCubit>();
+    if (cubit.state is ReportAnalyticsPartLoading) {
+      return;
+    }
+
+    final range = _monthRange(_selectedMonth);
+    cubit.getTransactionSummary(_formatMonthParam(_selectedMonth), range);
+    cubit.getTransactionStats(
+      StatsIn(filterOn: FilterOn.category, range: range, onlyExpense: true),
+    );
+    cubit.getTransactionTimeSeries(
+      TimeSeriesIn(granulity: Granulity.day, range: range),
+    );
+    cubit.getTransactionsForReport(ListTransactionsIn(range: range));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
-        title: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: _MonthSelector(
-            selectedDate: _selectedMonth,
-            onChanged: (date) {
-              setState(() => _selectedMonth = date);
-              _refreshAllForMonth();
-            },
-          ),
+        title: _MonthSelector(
+          selectedDate: _selectedMonth,
+          onChanged: (date) {
+            setState(() {
+              _selectedMonth = date;
+            });
+            _refreshInsightsForMonth();
+          },
         ),
       ),
       body: BlocBuilder<ReportAnalyticsCubit, ReportAnalyticsState>(
         builder: (context, state) {
           ReportAnalytics? data;
-          bool isListLoading = false;
+          bool isLoading = false;
 
           if (state is ReportAnalyticsLoaded) {
             data = state.data;
           } else if (state is ReportAnalyticsPartLoading) {
             data = state.existing;
-            isListLoading = state.partial == ReportAnalyticsIsLoading.listTransaction || state.partial == ReportAnalyticsIsLoading.all;
+            isLoading = state.partial == ReportAnalyticsIsLoading.all;
           }
 
           if (data == null) {
             return const Center(child: CircularProgressIndicator());
           }
 
+          final currency = _currencyFromTransactions(data.transactions);
+          final topCategory = _highestSpendingCategory(data.transactionStats);
+          final frequentType = _mostFrequentType(data.transactions);
+          final weekComparison = _thisWeekVsLastWeek(
+            data.transactions,
+            _selectedMonth,
+          );
+
           return RefreshIndicator(
-            onRefresh: _refreshAllForMonth,
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                // 1. Top: Monthly Net Flow (Income - Expense)
-                SliverToBoxAdapter(
-                  child: _MonthlyNetFlowHeader(summary: data.transactionSummary),
-                ),
-            
-                // 2. Income/Expense Cards
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverToBoxAdapter(
-                    child: _SummaryCardsRow(summary: data.transactionSummary),
-                  ),
-                ),
-            
-                // 3. Cash Flow Chart
-                SliverPadding(
-                  padding: const EdgeInsets.all(16),
-                  sliver: SliverToBoxAdapter(
-                    child: _TimeSeriesSection(
-                      timeSeriesList: data.transactionTimeSeriess,
-                      granularity: _granularity,
-                      onGranularityChanged: (g) {
-                        setState(() => _granularity = g);
-                        context.read<ReportAnalyticsCubit>().getTransactionTimeSeries(
-                          TimeSeriesIn(granulity: g, range: _getMonthRange(_selectedMonth))
-                        );
-                      },
-                      onDateTap: (date) {
-                        // Prevent refetch if currently loading
-                        if (state is! ReportAnalyticsPartLoading) {
-                          context.read<ReportAnalyticsCubit>().getTransactionsForReport(
-                            ListTransactionsIn(range: DateRange(start: date, end: date))
-                          );
-                        }
-                      },
+            onRefresh: _refreshInsightsForMonth,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
+              children: [
+                if (isLoading) const LinearProgressIndicator(),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _HighlightCard(
+                        title: 'Highest Category',
+                        icon: Icons.workspace_premium_rounded,
+                        primaryText: topCategory?.name ?? 'No data',
+                        secondaryText:
+                            topCategory == null
+                                ? 'Add expense data'
+                                : '${_money(topCategory.total, currency)} • ${topCategory.sharePct.toStringAsFixed(1)}%',
+                      ),
                     ),
-                  ),
-                ),
-            
-                // 4. Category Breakdown
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverToBoxAdapter(
-                    child: _CategoryStatsSection(stats: data.transactionStats),
-                  ),
-                ),
-            
-                // 5. Net Worth & Account Balances (RELOCATED HERE)
-                SliverPadding(
-                  padding: const EdgeInsets.all(16),
-                  sliver: SliverToBoxAdapter(
-                    child: _AccountBalancesSection(balances: data.accountBalances),
-                  ),
-                ),
-            
-                // 6. Monthly Transactions List
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  sliver: SliverToBoxAdapter(
-                    child: Text(
-                      "Transactions for ${DateFormat.MMMM().format(_selectedMonth)}", 
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _HighlightCard(
+                        title: 'Frequent Type',
+                        icon: Icons.repeat_rounded,
+                        primaryText: frequentType?.label ?? 'No data',
+                        secondaryText:
+                            frequentType == null
+                                ? 'Add transactions'
+                                : '${frequentType.count} transactions',
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-            
-                if (isListLoading)
-                  const SliverToBoxAdapter(child: LinearProgressIndicator()),
-            
-                SliverOpacity(
-                  opacity: isListLoading ? 0.5 : 1.0,
-                  sliver: _TransactionsSliverList(transactions: data.transactions),
+                const SizedBox(height: 12),
+                _WeekComparisonCard(
+                  weekComparison: weekComparison,
+                  currency: currency,
                 ),
-                
-                const SliverPadding(padding: EdgeInsets.only(bottom: 60)),
+                const SizedBox(height: 12),
+                _MonthlyTrendCard(
+                  points: data.transactionTimeSeriess,
+                  currency: currency,
+                ),
+                const SizedBox(height: 12),
+                _CategoryInsightsCard(
+                  stats: data.transactionStats,
+                  currency: currency,
+                ),
               ],
             ),
           );
         },
       ),
-    );
-  }
-}
-
-/// helper widget's
-
-class _MonthlyNetFlowHeader extends StatelessWidget {
-  final TransactionSummary summary;
-  const _MonthlyNetFlowHeader({required this.summary});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final net = double.tryParse(summary.netSavings) ?? 0.0;
-    
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-      child: Column(
-        children: [
-          Text("Monthly Net Flow", style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor)),
-          const SizedBox(height: 4),
-          Text(
-            "ETB ${summary.netSavings}",
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: net >= 0 ? Colors.green : Colors.redAccent,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TimeSeriesSection extends StatelessWidget {
-  final List<TransactionTimeSeries> timeSeriesList;
-  final Granulity granularity;
-  final ValueChanged<Granulity> onGranularityChanged;
-  final ValueChanged<DateTime> onDateTap;
-
-  const _TimeSeriesSection({
-    required this.timeSeriesList,
-    required this.granularity,
-    required this.onGranularityChanged,
-    required this.onDateTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Cash Flow", style: theme.textTheme.titleSmall),
-                // Only Day and Week
-                Row(
-                  children: [Granulity.day, Granulity.week].map((g) {
-                    final isSelected = granularity == g;
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: ChoiceChip(
-                        label: Text(g.name.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(color: isSelected ? Colors.white : null)),
-                        selected: isSelected,
-                        onSelected: (_) => onGranularityChanged(g),
-                        selectedColor: theme.primaryColor,
-                      ),
-                    );
-                  }).toList(),
-                )
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 200,
-              child: SfCartesianChart(
-                margin: EdgeInsets.zero,
-                plotAreaBorderWidth: 0,
-                primaryXAxis: DateTimeAxis(
-                  majorGridLines: const MajorGridLines(width: 0),
-                  // Fix for Interval: Uses Days, but set interval to 7 for weeks
-                  intervalType: DateTimeIntervalType.days,
-                  interval: granularity == Granulity.week ? 7 : 1, 
-                  dateFormat: granularity == Granulity.day ? DateFormat.d() : DateFormat.Md(),
-                  labelStyle: theme.textTheme.bodySmall,
-                ),
-                primaryYAxis: NumericAxis(isVisible: false),
-                series: <CartesianSeries>[
-                  ColumnSeries<TransactionTimeSeries, DateTime>(
-                    name: 'Income',
-                    dataSource: timeSeriesList,
-                    xValueMapper: (data, _) => data.date,
-                    yValueMapper: (data, _) => double.tryParse(data.income) ?? 0,
-                    color: Colors.green.withAlpha(179),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-                    onPointTap: (details) {
-                      if (details.pointIndex != null && details.pointIndex! >= 0 && details.pointIndex! < timeSeriesList.length) {
-                        onDateTap(timeSeriesList[details.pointIndex!].date);
-                      }
-                    },
-                  ),
-                  ColumnSeries<TransactionTimeSeries, DateTime>(
-                    name: 'Expense',
-                    dataSource: timeSeriesList,
-                    xValueMapper: (data, _) => data.date,
-                    yValueMapper: (data, _) => double.tryParse(data.expense) ?? 0,
-                    color: Colors.redAccent.withAlpha(179),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-                    onPointTap: (details) {
-                      if (details.pointIndex != null && details.pointIndex! >= 0 && details.pointIndex! < timeSeriesList.length) {
-                        onDateTap(timeSeriesList[details.pointIndex!].date);
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AccountBalancesSection extends StatelessWidget {
-  final AccountBalances balances;
-  const _AccountBalancesSection({required this.balances});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text("Net Worth", style: theme.textTheme.titleSmall),
-            Text("ETB ${balances.totalBalance}", 
-                 style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: theme.primaryColor)),
-          ],
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 90,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: balances.accounts.length,
-            itemBuilder: (context, i) {
-              final acc = balances.accounts[i];
-              return Card(
-                child: Container(
-                  width: 150,
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(acc.name, style: theme.textTheme.labelSmall, maxLines: 1, overflow: TextOverflow.ellipsis),
-                      Text("ETB ${acc.balance}", style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SummaryCardsRow extends StatelessWidget {
-  final TransactionSummary summary;
-  const _SummaryCardsRow({required this.summary});
-
-  @override
-  Widget build(BuildContext context) {
-    final fmt = NumberFormat.compactCurrency(symbol: 'ETB ');
-    return Row(
-      children: [
-        Expanded(
-          child: _SummaryCard(
-            label: "Income",
-            value: fmt.format(double.parse(summary.totalIncome)),
-            color: Colors.green,
-            icon: Icons.south_west,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _SummaryCard(
-            label: "Expense",
-            value: fmt.format(double.parse(summary.totalExpense)),
-            color: Colors.redAccent,
-            icon: Icons.north_east,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -392,22 +163,83 @@ class _MonthSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.arrow_back_ios, size: 18),
+          onPressed: () {
+            onChanged(DateTime(selectedDate.year, selectedDate.month - 1));
+          },
+        ),
+        Text(
+          DateFormat.yMMMM().format(selectedDate),
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: theme.colorScheme.onPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.arrow_forward_ios, size: 18),
+          onPressed: () {
+            onChanged(DateTime(selectedDate.year, selectedDate.month + 1));
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _HighlightCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final String primaryText;
+  final String secondaryText;
+
+  const _HighlightCard({
+    required this.title,
+    required this.icon,
+    required this.primaryText,
+    required this.secondaryText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios, size: 18),
-            onPressed: () => onChanged(DateTime(selectedDate.year, selectedDate.month - 1)),
-          ),
+          Icon(icon, size: 20, color: theme.colorScheme.primary),
+          const SizedBox(height: 8),
           Text(
-            DateFormat.yMMMM().format(selectedDate),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+            title,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withAlpha(170),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.arrow_forward_ios, size: 18),
-            onPressed: () => onChanged(DateTime(selectedDate.year, selectedDate.month + 1)),
+          const SizedBox(height: 4),
+          Text(
+            primaryText,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            secondaryText,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall,
           ),
         ],
       ),
@@ -415,26 +247,80 @@ class _MonthSelector extends StatelessWidget {
   }
 }
 
-class _SummaryCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-  final IconData icon;
+class _WeekComparisonCard extends StatelessWidget {
+  final _WeekComparisonInsight? weekComparison;
+  final String currency;
 
-  const _SummaryCard({required this.label, required this.value, required this.color, required this.icon});
+  const _WeekComparisonCard({
+    required this.weekComparison,
+    required this.currency,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (weekComparison == null) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Text(
+            'Week comparison appears once enough transactions exist.',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
+      );
+    }
+
+    final color = weekComparison!.isIncrease ? Colors.redAccent : Colors.green;
+    final icon =
+        weekComparison!.isIncrease
+            ? Icons.trending_up_rounded
+            : Icons.trending_down_rounded;
+
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(height: 8),
-            Text(label, style: Theme.of(context).textTheme.bodySmall),
-            Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              'This Week vs Last Week',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _WeekValue(
+                    label: 'This week',
+                    value: _money(weekComparison!.thisWeekExpense, currency),
+                  ),
+                ),
+                Expanded(
+                  child: _WeekValue(
+                    label: 'Last week',
+                    value: _money(weekComparison!.lastWeekExpense, currency),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(icon, color: color, size: 18),
+                const SizedBox(width: 6),
+                Text(
+                  '${weekComparison!.deltaPct.abs().toStringAsFixed(1)}% ${weekComparison!.isIncrease ? 'higher' : 'lower'} expense than last week',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -442,44 +328,192 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _CategoryStatsSection extends StatelessWidget {
-  final List<TransactionStats> stats;
-  const _CategoryStatsSection({required this.stats});
+class _WeekValue extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _WeekValue({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final fmt = NumberFormat.simpleCurrency(name: 'ETB ');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withAlpha(170),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MonthlyTrendCard extends StatelessWidget {
+  final List<TransactionTimeSeries> points;
+  final String currency;
+
+  const _MonthlyTrendCard({required this.points, required this.currency});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (points.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Text(
+            'No monthly trend data for this period.',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
+      );
+    }
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Spending by Category", style: theme.textTheme.titleSmall),
-            const SizedBox(height: 16),
-            ...stats.map((s) {
-              final double percent = double.tryParse(s.percentage.replaceAll('%', '')) ?? 0;
+            Text(
+              'Monthly Trend',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Net flow over the selected month',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withAlpha(170),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 210,
+              child: SfCartesianChart(
+                margin: EdgeInsets.zero,
+                plotAreaBorderWidth: 0,
+                primaryXAxis: DateTimeAxis(
+                  intervalType: DateTimeIntervalType.days,
+                  dateFormat: DateFormat.d(),
+                  majorGridLines: const MajorGridLines(width: 0),
+                ),
+                primaryYAxis: NumericAxis(
+                  numberFormat: NumberFormat.compactCurrency(
+                    symbol: '$currency ',
+                  ),
+                ),
+                series: <CartesianSeries<TransactionTimeSeries, DateTime>>[
+                  SplineAreaSeries<TransactionTimeSeries, DateTime>(
+                    dataSource: points,
+                    xValueMapper: (point, _) => point.date,
+                    yValueMapper: (point, _) => double.tryParse(point.net) ?? 0,
+                    color: Theme.of(context).colorScheme.primary.withAlpha(60),
+                    borderColor: Theme.of(context).colorScheme.primary,
+                    borderWidth: 2,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryInsightsCard extends StatelessWidget {
+  final List<TransactionStats> stats;
+  final String currency;
+
+  const _CategoryInsightsCard({required this.stats, required this.currency});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (stats.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Text(
+            'No category breakdown data for this period.',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
+      );
+    }
+
+    final top = _highestSpendingCategory(stats);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Spending by Category',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (top != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Top: ${top.name} (${top.sharePct.toStringAsFixed(1)}%)',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withAlpha(170),
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
+            ...stats.take(6).map((s) {
+              final pct = _safeDouble(s.percentage);
               return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.only(bottom: 10),
                 child: Column(
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(s.name, style: theme.textTheme.bodyMedium),
-                        Text("${fmt.format(double.parse(s.total))} (${s.percentage})", 
-                             style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold)),
+                        Expanded(
+                          child: Text(
+                            s.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _money(_safeDouble(s.total), currency),
+                          style: theme.textTheme.bodySmall,
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    LinearProgressIndicator(
-                      value: percent / 100,
-                      backgroundColor: theme.dividerColor.withAlpha(26),
-                      color: theme.colorScheme.secondary,
-                      borderRadius: BorderRadius.circular(4),
-                    )
+                    const SizedBox(height: 5),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(5),
+                      child: LinearProgressIndicator(
+                        minHeight: 8,
+                        value: (pct / 100).clamp(0.0, 1.0),
+                        backgroundColor:
+                            theme.colorScheme.surfaceContainerHighest,
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -491,41 +525,146 @@ class _CategoryStatsSection extends StatelessWidget {
   }
 }
 
+class _TopCategoryInsight {
+  final String name;
+  final double total;
+  final double sharePct;
 
-class _TransactionsSliverList extends StatelessWidget {
-  final List<Transaction> transactions;
-  const _TransactionsSliverList({required this.transactions});
+  const _TopCategoryInsight({
+    required this.name,
+    required this.total,
+    required this.sharePct,
+  });
+}
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final tx = transactions[index];
-          final isExpense = tx.type == TransactionType.EXPENSE;
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: theme.primaryColor.withAlpha(26),
-                child: Icon(isExpense ? Icons.shopping_bag : Icons.account_balance_wallet, 
-                      color: theme.primaryColor, size: 20),
-              ),
-              title: Text(tx.description ?? tx.merchant ?? "Transaction", style: theme.textTheme.bodyMedium),
-              subtitle: Text(DateFormat.yMMMd().format(tx.occuredAt), style: theme.textTheme.bodySmall),
-              trailing: Text(
-                "${isExpense ? '-' : '+'} ${tx.amountValue}",
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: isExpense ? Colors.redAccent : Colors.green,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          );
-        },
-        childCount: transactions.length,
-      ),
-    );
+class _TypeInsight {
+  final String label;
+  final int count;
+
+  const _TypeInsight({required this.label, required this.count});
+}
+
+class _WeekComparisonInsight {
+  final double thisWeekExpense;
+  final double lastWeekExpense;
+  final double deltaPct;
+  final bool isIncrease;
+
+  const _WeekComparisonInsight({
+    required this.thisWeekExpense,
+    required this.lastWeekExpense,
+    required this.deltaPct,
+    required this.isIncrease,
+  });
+}
+
+String _currencyFromTransactions(List<Transaction> txs) {
+  if (txs.isNotEmpty) {
+    return txs.first.currency;
   }
+  return 'ETB';
+}
+
+_TopCategoryInsight? _highestSpendingCategory(List<TransactionStats> stats) {
+  if (stats.isEmpty) {
+    return null;
+  }
+
+  final sorted = List<TransactionStats>.from(stats);
+  sorted.sort((a, b) => _safeDouble(b.total).compareTo(_safeDouble(a.total)));
+
+  final top = sorted.first;
+  return _TopCategoryInsight(
+    name: top.name,
+    total: _safeDouble(top.total),
+    sharePct: _safeDouble(top.percentage),
+  );
+}
+
+_TypeInsight? _mostFrequentType(List<Transaction> txs) {
+  if (txs.isEmpty) {
+    return null;
+  }
+
+  final counts = <TransactionType, int>{};
+  for (final tx in txs) {
+    counts[tx.type] = (counts[tx.type] ?? 0) + 1;
+  }
+
+  final sorted =
+      counts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+  final top = sorted.first;
+
+  return _TypeInsight(label: _typeLabel(top.key), count: top.value);
+}
+
+_WeekComparisonInsight? _thisWeekVsLastWeek(
+  List<Transaction> txs,
+  DateTime selectedMonth,
+) {
+  if (txs.isEmpty) {
+    return null;
+  }
+
+  final now = DateTime.now();
+  final monthEnd = DateTime(selectedMonth.year, selectedMonth.month + 1, 0);
+  final anchor = monthEnd.isAfter(now) ? now : monthEnd;
+
+  DateTime startOfDay(DateTime d) => DateTime(d.year, d.month, d.day);
+  DateTime endOfDay(DateTime d) => DateTime(d.year, d.month, d.day, 23, 59, 59);
+
+  final thisWeekEnd = endOfDay(anchor);
+  final thisWeekStart = startOfDay(anchor.subtract(const Duration(days: 6)));
+  final lastWeekEnd = endOfDay(thisWeekStart.subtract(const Duration(days: 1)));
+  final lastWeekStart = startOfDay(
+    lastWeekEnd.subtract(const Duration(days: 6)),
+  );
+
+  double sumExpense(DateTime start, DateTime end) {
+    var sum = 0.0;
+    for (final tx in txs) {
+      if (tx.type != TransactionType.EXPENSE) {
+        continue;
+      }
+      if (tx.occuredAt.isBefore(start) || tx.occuredAt.isAfter(end)) {
+        continue;
+      }
+      sum += _safeDouble(tx.amount);
+    }
+    return sum;
+  }
+
+  final thisWeek = sumExpense(thisWeekStart, thisWeekEnd);
+  final lastWeek = sumExpense(lastWeekStart, lastWeekEnd);
+
+  final deltaPct =
+      lastWeek == 0
+          ? (thisWeek > 0 ? 100.0 : 0.0)
+          : ((thisWeek - lastWeek) / lastWeek) * 100;
+
+  return _WeekComparisonInsight(
+    thisWeekExpense: thisWeek,
+    lastWeekExpense: lastWeek,
+    deltaPct: deltaPct,
+    isIncrease: thisWeek >= lastWeek,
+  );
+}
+
+String _typeLabel(TransactionType type) {
+  if (type == TransactionType.INCOME) {
+    return 'Income';
+  }
+  if (type == TransactionType.EXPENSE) {
+    return 'Expense';
+  }
+  return 'Transfer';
+}
+
+double _safeDouble(String raw) {
+  return double.tryParse(raw.replaceAll('%', '').replaceAll(',', '')) ?? 0.0;
+}
+
+String _money(double value, String currency) {
+  final f = NumberFormat.compactCurrency(symbol: '$currency ');
+  return f.format(value);
 }
