@@ -607,7 +607,8 @@ class _OverviewMetricsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final savingsColor = metrics.savings.sign >= 0 ? Colors.green : Colors.redAccent;
+    final savingsColor =
+        metrics.savings.sign >= 0 ? Colors.green : Colors.redAccent;
 
     return Card(
       margin: EdgeInsets.zero,
