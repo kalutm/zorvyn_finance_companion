@@ -37,7 +37,7 @@ What I changed for this assessment-focused mobile submission:
 
 ## Build / Demo Links
 
-- Android build artifact (APK/AAB): `<<PASTE_BUILD_LINK_HERE>>`
+- Android build artifact (APK): https://github.com/kalutm/zorvyn_finance_companion/releases/tag/finance_companion
 - Demo video: `<<PASTE_DEMO_VIDEO_LINK_HERE>>`
 
 ## Screenshots Placeholder
@@ -56,7 +56,7 @@ Add screenshots below before submission.
 
 `<<INSERT_SCREENSHOT_OR_IMAGE_LINK>>`
 
-### Insights Screen
+### Report & Anlytics Screen
 
 `<<INSERT_SCREENSHOT_OR_IMAGE_LINK>>`
 
@@ -132,7 +132,7 @@ The app is designed for everyday use with simple navigation, focused screens, an
 - Multi-currency-aware summaries in budget calculations.
 - Demo seed utility from Settings to populate realistic sample accounts/categories/budgets/transactions.
 
-## Documentation Notes (Evaluation Criteria #8)
+## Documentation Notes
 
 This README intentionally includes:
 
@@ -190,14 +190,6 @@ flutter doctor
 flutter devices
 flutter run
 ```
-
-## Clone/Build Readiness Notes
-
-Based on current `.gitignore` and project contents:
-
-- Essential Android project files are included (Gradle wrapper + Android module).
-- `android/local.properties` is intentionally ignored and generated automatically.
-- Build outputs and caches are ignored as expected.
 
 ## Main Feature Areas
 
