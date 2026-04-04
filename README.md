@@ -40,15 +40,13 @@ What I changed for this assessment-focused mobile submission:
 - Android build artifact (APK): https://github.com/kalutm/zorvyn_finance_companion/releases/tag/finance_companion
 - Demo video: https://github.com/kalutm/zorvyn_finance_companion/releases/tag/demo_video
 
-## Screenshots Placeholder
-
-Add screenshots below before submission.
+## Screenshots
 
 ### Home Dashboard
 
 <img src="https://github.com/user-attachments/assets/2dcf1871-c1c6-463e-9eaa-28b3f6471165" width="250" height="500" />
 
-### Transactions (List + Form + Filters)
+### Transactions
 
 <p>
 <img src="https://github.com/user-attachments/assets/0d87d0b3-92a9-408d-b56c-f0293ce39465" width="250" height="500" />
@@ -63,7 +61,7 @@ Add screenshots below before submission.
 
 <img src="https://github.com/user-attachments/assets/5bdc9a23-22c1-4efa-90fc-bd54932940f6" width="250" height="500" />
 
-### Settings (Dark Mode + Biometric Toggle)
+### Settings
 
 <img src="https://github.com/user-attachments/assets/cb86af6f-0ae8-4a2d-aa79-120c2ac1689f" width="250" height="500" />
 
