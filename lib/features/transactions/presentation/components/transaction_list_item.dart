@@ -1,4 +1,6 @@
+import 'package:finance_frontend/features/accounts/domain/entities/account.dart';
 import 'package:finance_frontend/features/accounts/presentation/blocs/accounts/accounts_bloc.dart';
+import 'package:finance_frontend/features/accounts/presentation/blocs/accounts/accounts_state.dart';
 import 'package:finance_frontend/features/categories/presentation/blocs/categories/categories_bloc.dart';
 import 'package:finance_frontend/features/transactions/domain/entities/transaction.dart';
 import 'package:finance_frontend/features/transactions/domain/entities/transaction_type.dart';
@@ -63,6 +65,16 @@ class TransactionListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final amountColor = _getAmountColor(context, theme);
+    final accountsState = context.read<AccountsBloc>().state;
+    String? accName;
+    if (accountsState is AccountsLoaded) {
+      // Find the account by ID, checking the ID string matches
+      final account = accountsState.accounts.cast<Account?>().firstWhere(
+        (acc) => acc?.id == transaction.accountId,
+        orElse: () => null,
+      );
+      accName = account?.name;
+    }
 
     final formattedAmount = NumberFormat.currency(
       locale: 'en_US',
@@ -112,7 +124,7 @@ class TransactionListItem extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${transaction.merchant ?? transaction.type} • ${DateFormat.yMd().format(transaction.occuredAt)}',
+                      '${transaction.merchant ?? "Type: ${transaction.type.name}"} • ${DateFormat.yMd().format(transaction.occuredAt)}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurface.withAlpha(178),
                       ),
@@ -132,7 +144,7 @@ class TransactionListItem extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Acc. ID: ${transaction.accountId}',
+                    'Account: ${accName??transaction.accountId}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurface.withOpacity(0.6),
                     ),
