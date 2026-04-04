@@ -46,24 +46,26 @@ Add screenshots below before submission.
 
 ### Home Dashboard
 
-![Screenshot_20260404_223648](https://github.com/user-attachments/assets/2dcf1871-c1c6-463e-9eaa-28b3f6471165)
+<img src="https://github.com/user-attachments/assets/2dcf1871-c1c6-463e-9eaa-28b3f6471165" width="250" height="500" />
 
 ### Transactions (List + Form + Filters)
 
-![Screenshot_20260404_223657](https://github.com/user-attachments/assets/0d87d0b3-92a9-408d-b56c-f0293ce39465)
-<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/a18b3721-7a81-43ae-85f8-c9ae851e76cf" />
+<p>
+<img src="https://github.com/user-attachments/assets/0d87d0b3-92a9-408d-b56c-f0293ce39465" width="250" height="500" />
+<img src="https://github.com/user-attachments/assets/a18b3721-7a81-43ae-85f8-c9ae851e76cf" width="250" height="500" />
+</p>
 
 ### Budget Feature
 
-![Screenshot_20260404_223725](https://github.com/user-attachments/assets/4615179f-88ea-4606-9c06-959b5b2f3bae)
+<img src="https://github.com/user-attachments/assets/4615179f-88ea-4606-9c06-959b5b2f3bae" width="250" height="500" />
 
-### Report & Anlytics Screen
+### Report & Analytics Screen
 
-![Screenshot_20260404_223757](https://github.com/user-attachments/assets/5bdc9a23-22c1-4efa-90fc-bd54932940f6)
+<img src="https://github.com/user-attachments/assets/5bdc9a23-22c1-4efa-90fc-bd54932940f6" width="250" height="500" />
 
 ### Settings (Dark Mode + Biometric Toggle)
 
-![Screenshot_20260404_223804](https://github.com/user-attachments/assets/cb86af6f-0ae8-4a2d-aa79-120c2ac1689f)
+<img src="https://github.com/user-attachments/assets/cb86af6f-0ae8-4a2d-aa79-120c2ac1689f" width="250" height="500" />
 
 ## Project Overview
 
