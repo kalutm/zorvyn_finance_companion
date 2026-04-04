@@ -76,6 +76,13 @@ class TransactionListItem extends StatelessWidget {
       accName = account?.name;
     }
 
+    final isTransfer = transaction.type == TransactionType.TRANSFER;
+    String? outOrInLabelString;
+    final isOutgoing = transaction.isOutGoing;
+    if(isOutgoing != null){
+      outOrInLabelString = isOutgoing? "Out" : "In";
+    }
+
     final formattedAmount = NumberFormat.currency(
       locale: 'en_US',
       symbol: transaction.currency,
@@ -116,7 +123,7 @@ class TransactionListItem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      transaction.description ?? transaction.type.name,
+                      transaction.description ?? (isTransfer? "${transaction.type.name} • $outOrInLabelString" : transaction.type.name),
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                         overflow: TextOverflow.ellipsis,
@@ -124,7 +131,7 @@ class TransactionListItem extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${transaction.merchant ?? "Type: ${transaction.type.name}"} • ${DateFormat.yMd().format(transaction.occuredAt)}',
+                      '${transaction.merchant ?? "Type: ${(isTransfer? "${transaction.type.name} • $outOrInLabelString" : transaction.type.name)}"} • ${DateFormat.yMd().format(transaction.occuredAt)}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurface.withAlpha(178),
                       ),

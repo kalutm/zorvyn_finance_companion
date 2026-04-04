@@ -1,4 +1,5 @@
 import 'package:finance_frontend/features/accounts/presentation/views/accounts_wrapper.dart';
+import 'package:finance_frontend/features/budget/presentation/views/budgets_wrapper.dart';
 import 'package:finance_frontend/features/categories/presentation/views/categories_wrapper.dart';
 import 'package:finance_frontend/features/settings/presentation/views/settings_view.dart';
 import 'package:finance_frontend/features/transactions/presentation/views/report_and_anlytics_wrapper.dart';
@@ -13,7 +14,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  // 0: Transactions (Default), 1: Accounts, 2: Categories, 3: Settings
+  // 0: Transactions, 1: Accounts, 2: Categories, 3: Budgets, 4: Report, 5: Settings
   int _selectedIndex = 0;
 
   // Mapping to hold our navigation destinations
@@ -21,6 +22,7 @@ class _HomeState extends State<Home> {
     const TransactionsView(),
     const AccountsWrapper(),
     const CategoriesWrapper(),
+    const BudgetsWrapper(),
     const Reportandanlyticswrappr(),
     const SettingsView(),
   ];
@@ -50,7 +52,6 @@ class _HomeState extends State<Home> {
 
       body: _widgetOptions.elementAt(_selectedIndex),
 
-
       drawer: Drawer(
         child: Column(
           children: [
@@ -67,7 +68,7 @@ class _HomeState extends State<Home> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Finance Tracker',
+                    'Finance Companion',
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: theme.colorScheme.onPrimary,
                     ),
@@ -100,16 +101,23 @@ class _HomeState extends State<Home> {
             ),
             _buildDrawerItem(
               context,
+              title: 'Budgets',
+              icon: Icons.savings_rounded,
+              index: 3,
+              onTap: _onItemTapped,
+            ),
+            _buildDrawerItem(
+              context,
               title: 'Report & Analytics',
               icon: Icons.pie_chart_outline_rounded,
-              index: 3,
+              index: 4,
               onTap: _onItemTapped,
             ),
             _buildDrawerItem(
               context,
               title: 'Settings',
               icon: Icons.settings_rounded,
-              index: 4,
+              index: 5,
               onTap: _onItemTapped,
             ),
           ],
@@ -161,11 +169,13 @@ class _HomeState extends State<Home> {
       case 2:
         return 'Categories';
       case 3:
-        return "Report & Analytics";
+        return 'Budgets';
       case 4:
+        return "Report & Analytics";
+      case 5:
         return "Settings";
       default:
-        return 'Finance Tracker';
+        return 'Finance Companion';
     }
   }
 }

@@ -1,6 +1,7 @@
 import 'package:finance_frontend/core/provider/providers.dart';
 import 'package:finance_frontend/core/views/home.dart';
 import 'package:finance_frontend/features/accounts/presentation/blocs/accounts/accounts_bloc.dart';
+import 'package:finance_frontend/features/budget/presentation/blocs/budgets/budgets_bloc.dart';
 import 'package:finance_frontend/features/categories/presentation/blocs/categories/categories_bloc.dart';
 import 'package:finance_frontend/features/transactions/presentation/bloc/transaction_form/transaction_form_bloc.dart';
 import 'package:finance_frontend/features/transactions/presentation/bloc/transactions/transactions_bloc.dart';
@@ -34,38 +35,35 @@ class _AppWrapperState extends ConsumerState<AppWrapper> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: systemOverlayStyle,
       child: MultiBlocProvider(
-              providers: [
-                BlocProvider(
-                  create:
-                      (context) =>
-                          AccountsBloc(ref.read(accountServiceProvider)),
-                ),
-                BlocProvider(
-                  create:
-                      (context) => TransactionsBloc(
-                        ref.read(transactionServiceProvider),
-                      ),
-                ),
-                BlocProvider(
-                  create:
-                      (context) => TransactionFormBloc(
-                        ref.read(transactionServiceProvider),
-                      ),
-                ),
-                BlocProvider(
-                  create:
-                      (context) =>
-                          CategoriesBloc(ref.read(categoryServiceProvider)),
-                ),
-                BlocProvider(
-                  create:
-                      (context) => ReportAnalyticsCubit(
-                        ref.read(transactionServiceProvider),
-                      ),
-                ),
-              ],
-              child: const Home(),
-            ),
+        providers: [
+          BlocProvider(
+            create: (context) => AccountsBloc(ref.read(accountServiceProvider)),
+          ),
+          BlocProvider(
+            create:
+                (context) =>
+                    TransactionsBloc(ref.read(transactionServiceProvider)),
+          ),
+          BlocProvider(
+            create:
+                (context) =>
+                    TransactionFormBloc(ref.read(transactionServiceProvider)),
+          ),
+          BlocProvider(
+            create:
+                (context) => CategoriesBloc(ref.read(categoryServiceProvider)),
+          ),
+          BlocProvider(
+            create: (context) => BudgetsBloc(ref.read(budgetServiceProvider)),
+          ),
+          BlocProvider(
+            create:
+                (context) =>
+                    ReportAnalyticsCubit(ref.read(transactionServiceProvider)),
+          ),
+        ],
+        child: const Home(),
+      ),
     );
   }
 }

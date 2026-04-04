@@ -61,9 +61,10 @@ class _CategoriesPageState extends State<CategoriesView> {
       ],
       child: Scaffold(
         body: SafeArea(child: _buildBody(context)),
-        floatingActionButton: FloatingActionButton(
+        floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _openCreateSheet(context),
-          child: const Icon(Icons.add),
+          icon: const Icon(Icons.add),
+          label: const Text('New Category'),
         ),
       ),
     );

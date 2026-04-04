@@ -98,25 +98,6 @@ class BalanceCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-
-            // 3. Status/Metadata Placeholder for quick insights : i will implement it in the future
-            Row(
-              children: [
-                Icon(
-                  Icons.access_time_rounded,
-                  size: 16,
-                  color: textColor.withAlpha(153),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Last updated: Today',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: textColor.withAlpha(153),
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),

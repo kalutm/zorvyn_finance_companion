@@ -17,6 +17,9 @@ import 'package:finance_frontend/features/transactions/data/service/finance_tran
 import 'package:finance_frontend/features/transactions/domain/data_source/trans_data_source.dart'; // TransDataSource
 import 'package:finance_frontend/features/transactions/data/data_sources/hive_trans_data_source.dart'; // HiveTransDataSource
 
+import 'package:finance_frontend/features/budget/domain/service/budget_service.dart'; // BudgetService
+import 'package:finance_frontend/features/budget/data/services/hive_budget_service.dart'; // HiveBudgetService
+
 // Blocs / Cubits
 import 'package:finance_frontend/features/settings/presentation/cubits/settings_cubit.dart'; // SettingsCubit
 import 'package:finance_frontend/features/accounts/presentation/blocs/accounts/accounts_bloc.dart'; // AccountsBloc
@@ -25,6 +28,8 @@ import 'package:finance_frontend/features/categories/presentation/blocs/categori
 import 'package:finance_frontend/features/categories/presentation/blocs/category_form/category_form_bloc.dart'; // CategoryFormBloc
 import 'package:finance_frontend/features/transactions/presentation/bloc/transactions/transactions_bloc.dart'; // TransactionsBloc
 import 'package:finance_frontend/features/transactions/presentation/bloc/transaction_form/transaction_form_bloc.dart'; // TransactionFormBloc
+import 'package:finance_frontend/features/budget/presentation/blocs/budgets/budgets_bloc.dart'; // BudgetsBloc
+import 'package:finance_frontend/features/budget/presentation/blocs/budget_form/budget_form_bloc.dart'; // BudgetFormBloc
 
 /// Low level / core providers ///
 
@@ -50,6 +55,11 @@ final categoryServiceProvider = Provider<CategoryService>((ref) {
 /// HiveTransDataSource exposed as TransDataSource (interface)
 final transDataSourceProvider = Provider<TransDataSource>((ref) {
   return HiveTransDataSource();
+});
+
+/// HiveBudgetService exposed as BudgetService (interface)
+final budgetServiceProvider = Provider<BudgetService>((ref) {
+  return HiveBudgetService();
 });
 
 /// FinanceTransactionService exposed as TransactionService (interface)
@@ -103,6 +113,18 @@ final transactionsBlocProvider = Provider<TransactionsBloc>((ref) {
 final transactionFormBlocProvider = Provider<TransactionFormBloc>((ref) {
   final service = ref.read(transactionServiceProvider);
   return TransactionFormBloc(service);
+});
+
+/// BudgetsBloc
+final budgetsBlocProvider = Provider<BudgetsBloc>((ref) {
+  final service = ref.read(budgetServiceProvider);
+  return BudgetsBloc(service);
+});
+
+/// BudgetFormBloc
+final budgetFormBlocProvider = Provider<BudgetFormBloc>((ref) {
+  final service = ref.read(budgetServiceProvider);
+  return BudgetFormBloc(service);
 });
 
 /// ReportAnlyticsCubit
