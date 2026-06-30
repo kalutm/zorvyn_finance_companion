@@ -480,7 +480,7 @@ class _CategoryInsightsCard extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 10),
-            ...stats.take(6).map((s) {
+            ...stats.map((s) {
               final pct = _safeDouble(s.percentage);
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),

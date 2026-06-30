@@ -140,25 +140,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                     : Icons.lock_open_rounded,
               ),
             ),
-          const Divider(height: 1),
-          ListTile(
-            leading: const Icon(Icons.science_rounded),
-            title: const Text('Load Demo Data'),
-            subtitle: const Text(
-              'Populate sample accounts, categories, budgets, and transactions for demos/testing.',
-            ),
-            trailing:
-                _isSeedingDemoData
-                    ? const SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                    : ElevatedButton(
-                      onPressed: _seedDemoData,
-                      child: const Text('Seed'),
-                    ),
-          ),
         ],
       ),
     );

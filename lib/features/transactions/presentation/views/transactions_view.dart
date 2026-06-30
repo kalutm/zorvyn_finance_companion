@@ -595,7 +595,7 @@ class _TransactionsViewState extends State<TransactionsView> {
             .toList();
 
     items.sort((a, b) => b.total.compareTo(a.total));
-    return items.take(5).toList();
+    return items.toList();
   }
 }
 
@@ -970,9 +970,10 @@ class _RecentActivitySection extends StatelessWidget {
             ),
           )
         else
-          ...transactions
-              .take(showAll ? 8 : 3)
-              .map((tx) => TransactionListItem(transaction: tx)),
+          ...(showAll
+        ? transactions
+        : transactions.take(3))
+    .map((tx) => TransactionListItem(transaction: tx)),
       ],
     );
   }
