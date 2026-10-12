@@ -1,6 +1,7 @@
 import 'package:finance_frontend/features/accounts/presentation/blocs/accounts/accounts_event.dart';
 import 'package:finance_frontend/features/accounts/presentation/components/account_card.dart';
 import 'package:finance_frontend/features/accounts/presentation/components/account_form_modal.dart';
+import 'package:finance_frontend/features/transactions/presentation/cubits/balance_visibility_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:finance_frontend/features/accounts/domain/entities/account.dart'; 
@@ -79,36 +80,43 @@ class AccountsView extends StatelessWidget {
             onRefresh: () async {
               context.read<AccountsBloc>().add(RefreshAccounts());
             },
-            child: ListView(
-              padding: const EdgeInsets.all(16.0),
-              children: [
-                if (activeAccounts.isNotEmpty) ...[
-                  Text(
-                    'Active Accounts (${activeAccounts.length})',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 12.0),
-                  ...activeAccounts.map((account) => AccountCard(
-                    account: account,
-                    onTap: () => _showAccountFormModal(context, account: account),
-                  )),
-                  const SizedBox(height: 24.0),
-                ],
+            child: BlocBuilder<BalanceVisibilityCubit, bool>(
+              builder: (context, isVisible) {
+                final isObscured = !isVisible;
+                return ListView(
+                  padding: const EdgeInsets.all(16.0),
+                  children: [
+                    if (activeAccounts.isNotEmpty) ...[
+                      Text(
+                        'Active Accounts (${activeAccounts.length})',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 12.0),
+                      ...activeAccounts.map((account) => AccountCard(
+                        account: account,
+                        isObscured: isObscured,
+                        onTap: () => _showAccountFormModal(context, account: account),
+                      )),
+                      const SizedBox(height: 24.0),
+                    ],
 
-                if (inactiveAccounts.isNotEmpty) ...[
-                  Text(
-                    'Inactive Accounts (${inactiveAccounts.length})',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withAlpha(178),
-                    ),
-                  ),
-                  const SizedBox(height: 12.0),
-                  ...inactiveAccounts.map((account) => AccountCard(
-                    account: account,
-                    onTap: () => _showAccountFormModal(context, account: account),
-                  )),
-                ],
-              ],
+                    if (inactiveAccounts.isNotEmpty) ...[
+                      Text(
+                        'Inactive Accounts (${inactiveAccounts.length})',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface.withAlpha(178),
+                        ),
+                      ),
+                      const SizedBox(height: 12.0),
+                      ...inactiveAccounts.map((account) => AccountCard(
+                        account: account,
+                        isObscured: isObscured,
+                        onTap: () => _showAccountFormModal(context, account: account),
+                      )),
+                    ],
+                  ],
+                );
+              },
             ),
           );
         },

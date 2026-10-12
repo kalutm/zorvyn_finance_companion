@@ -12,8 +12,11 @@ class BalanceCard extends StatelessWidget {
     required this.currentBalance,
     required this.currency,
     this.isTotalBalance = false,
+    this.isObscured = false,
     super.key,
   });
+
+  final bool isObscured;
 
   String _formatBalance(String balance, String currency) {
     try {
@@ -73,10 +76,12 @@ class BalanceCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  _formatBalance(
-                    currentBalance,
-                    '',
-                  ),
+                  isObscured
+                      ? '••••••'
+                      : _formatBalance(
+                        currentBalance,
+                        '',
+                      ),
                   style: theme.textTheme.displaySmall?.copyWith(
                     color: textColor,
                     fontWeight: FontWeight.w800,

@@ -16,6 +16,7 @@ import 'package:finance_frontend/features/transactions/presentation/bloc/transac
 import 'package:finance_frontend/features/transactions/presentation/bloc/transactions/transactions_state.dart';
 import 'package:finance_frontend/features/transactions/presentation/components/balance_card.dart';
 import 'package:finance_frontend/features/transactions/presentation/components/transaction_list_item.dart';
+import 'package:finance_frontend/features/transactions/presentation/cubits/balance_visibility_cubit.dart';
 import 'package:finance_frontend/features/transactions/presentation/views/transaction_form_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -166,52 +167,69 @@ class _TransactionsViewState extends State<TransactionsView> {
               children: [
                 _buildSearchAndFilters(theme, searchQuery, selectedRange),
                 const SizedBox(height: 14),
-                BlocBuilder<AccountsBloc, AccountsState>(
-                  builder: (accountsContext, accountsState) {
-                    final balanceData = _calculateTotalBalanceFromState(
-                      accountsState,
-                      selectedAccount,
-                    );
+                BlocBuilder<BalanceVisibilityCubit, bool>(
+                  builder: (context, isVisible) {
+                    final isObscured = !isVisible;
+                    return Column(
+                      children: [
+                        BlocBuilder<AccountsBloc, AccountsState>(
+                          builder: (accountsContext, accountsState) {
+                            final balanceData =
+                                _calculateTotalBalanceFromState(
+                                  accountsState,
+                                  selectedAccount,
+                                );
 
-                    return BalanceCard(
-                      accountName: selectedAccount?.name ?? 'All Accounts',
-                      currentBalance: balanceData['balance']!,
-                      currency: balanceData['currency']!,
-                      isTotalBalance: selectedAccount == null,
+                            return BalanceCard(
+                              accountName:
+                                  selectedAccount?.name ?? 'All Accounts',
+                              currentBalance: balanceData['balance']!,
+                              currency: balanceData['currency']!,
+                              isTotalBalance: selectedAccount == null,
+                              isObscured: isObscured,
+                            );
+                          },
+                        ),
+                        _OverviewMetricsSection(
+                          metrics: metrics,
+                          isObscured: isObscured,
+                        ),
+                        const SizedBox(height: 16),
+                        BlocBuilder<CategoriesBloc, CategoriesState>(
+                          builder: (context, categoriesState) {
+                            final categoryNames =
+                                _categoryNames(categoriesState);
+                            final breakdown = _buildCategoryBreakdown(
+                              transactions,
+                              categoryNames,
+                            );
+                            return _InsightsSection(
+                              selectedIndex: _selectedInsightIndex,
+                              onSelected: (index) {
+                                setState(() {
+                                  _selectedInsightIndex = index;
+                                });
+                              },
+                              trendPoints: trend,
+                              breakdownItems: breakdown,
+                              currency: metrics.currency,
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        _RecentActivitySection(
+                          transactions: transactions,
+                          selectedAccount: selectedAccount,
+                          showAll: _showAllRecent,
+                          isObscured: isObscured,
+                          onToggle: () {
+                            setState(() {
+                              _showAllRecent = !_showAllRecent;
+                            });
+                          },
+                        ),
+                      ],
                     );
-                  },
-                ),
-                _OverviewMetricsSection(metrics: metrics),
-                const SizedBox(height: 16),
-                BlocBuilder<CategoriesBloc, CategoriesState>(
-                  builder: (context, categoriesState) {
-                    final categoryNames = _categoryNames(categoriesState);
-                    final breakdown = _buildCategoryBreakdown(
-                      transactions,
-                      categoryNames,
-                    );
-                    return _InsightsSection(
-                      selectedIndex: _selectedInsightIndex,
-                      onSelected: (index) {
-                        setState(() {
-                          _selectedInsightIndex = index;
-                        });
-                      },
-                      trendPoints: trend,
-                      breakdownItems: breakdown,
-                      currency: metrics.currency,
-                    );
-                  },
-                ),
-                const SizedBox(height: 20),
-                _RecentActivitySection(
-                  transactions: transactions,
-                  selectedAccount: selectedAccount,
-                  showAll: _showAllRecent,
-                  onToggle: () {
-                    setState(() {
-                      _showAllRecent = !_showAllRecent;
-                    });
                   },
                 ),
               ],
@@ -601,8 +619,12 @@ class _TransactionsViewState extends State<TransactionsView> {
 
 class _OverviewMetricsSection extends StatelessWidget {
   final _DashboardMetrics metrics;
+  final bool isObscured;
 
-  const _OverviewMetricsSection({required this.metrics});
+  const _OverviewMetricsSection({
+    required this.metrics,
+    required this.isObscured,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -622,7 +644,9 @@ class _OverviewMetricsSection extends StatelessWidget {
                 Expanded(
                   child: _MiniMetric(
                     label: 'Income',
-                    value: _formatMoney(metrics.income, metrics.currency),
+                    value: isObscured
+                        ? '••••'
+                        : _formatMoney(metrics.income, metrics.currency),
                     color: Colors.green,
                   ),
                 ),
@@ -630,7 +654,9 @@ class _OverviewMetricsSection extends StatelessWidget {
                 Expanded(
                   child: _MiniMetric(
                     label: 'Expense',
-                    value: _formatMoney(metrics.expense, metrics.currency),
+                    value: isObscured
+                        ? '••••'
+                        : _formatMoney(metrics.expense, metrics.currency),
                     color: Colors.redAccent,
                   ),
                 ),
@@ -638,7 +664,9 @@ class _OverviewMetricsSection extends StatelessWidget {
                 Expanded(
                   child: _MiniMetric(
                     label: 'Savings',
-                    value: _formatMoney(metrics.savings, metrics.currency),
+                    value: isObscured
+                        ? '••••'
+                        : _formatMoney(metrics.savings, metrics.currency),
                     color: savingsColor,
                   ),
                 ),
@@ -903,12 +931,14 @@ class _RecentActivitySection extends StatelessWidget {
   final List<Transaction> transactions;
   final Account? selectedAccount;
   final bool showAll;
+  final bool isObscured;
   final VoidCallback onToggle;
 
   const _RecentActivitySection({
     required this.transactions,
     required this.selectedAccount,
     required this.showAll,
+    required this.isObscured,
     required this.onToggle,
   });
 
@@ -973,7 +1003,7 @@ class _RecentActivitySection extends StatelessWidget {
           ...(showAll
         ? transactions
         : transactions.take(3))
-    .map((tx) => TransactionListItem(transaction: tx)),
+    .map((tx) => TransactionListItem(transaction: tx, isObscured: isObscured)),
       ],
     );
   }

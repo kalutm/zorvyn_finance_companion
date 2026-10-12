@@ -9,8 +9,11 @@ class AccountCard extends StatelessWidget {
   const AccountCard({
     required this.account,
     required this.onTap,
+    this.isObscured = false,
     super.key,
   });
+
+  final bool isObscured;
 
   IconData _getIconForType(AccountType type) {
     switch (type) {
@@ -81,7 +84,9 @@ class AccountCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  '${account.currency} ${account.balance}', 
+                  isObscured
+                      ? '•••••• ${account.currency}'
+                      : '${account.currency} ${account.balance}', 
                   style: theme.textTheme.headlineSmall?.copyWith(
                     color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w600

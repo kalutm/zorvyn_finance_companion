@@ -6,6 +6,7 @@ import 'package:finance_frontend/features/budget/presentation/blocs/budgets/budg
 import 'package:finance_frontend/features/categories/presentation/blocs/categories/categories_bloc.dart';
 import 'package:finance_frontend/features/transactions/presentation/bloc/transaction_form/transaction_form_bloc.dart';
 import 'package:finance_frontend/features/transactions/presentation/bloc/transactions/transactions_bloc.dart';
+import 'package:finance_frontend/features/transactions/presentation/cubits/balance_visibility_cubit.dart';
 import 'package:finance_frontend/features/transactions/presentation/cubits/report_analytics_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -61,6 +62,9 @@ class _AppWrapperState extends ConsumerState<AppWrapper> {
             create:
                 (context) =>
                     ReportAnalyticsCubit(ref.read(transactionServiceProvider)),
+          ),
+          BlocProvider(
+            create: (context) => BalanceVisibilityCubit(),
           ),
         ],
         child: const BiometricLockGate(child: Home()),

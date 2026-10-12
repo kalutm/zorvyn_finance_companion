@@ -13,7 +13,13 @@ import 'package:intl/intl.dart';
 class TransactionListItem extends StatelessWidget {
   final Transaction transaction;
 
-  const TransactionListItem({required this.transaction, super.key});
+  const TransactionListItem({
+    required this.transaction,
+    this.isObscured = false,
+    super.key,
+  });
+
+  final bool isObscured;
 
   Color _getAmountColor(BuildContext context, ThemeData theme) {
     final isExpense = transaction.type == TransactionType.EXPENSE;
@@ -143,7 +149,9 @@ class TransactionListItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${_getAmountPrefix()}${formattedAmount}',
+                    isObscured
+                        ? '${_getAmountPrefix()}••••'
+                        : '${_getAmountPrefix()}${formattedAmount}',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: amountColor,

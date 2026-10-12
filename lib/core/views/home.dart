@@ -2,9 +2,11 @@ import 'package:finance_frontend/features/accounts/presentation/views/accounts_w
 import 'package:finance_frontend/features/budget/presentation/views/budgets_wrapper.dart';
 import 'package:finance_frontend/features/categories/presentation/views/categories_wrapper.dart';
 import 'package:finance_frontend/features/settings/presentation/views/settings_view.dart';
+import 'package:finance_frontend/features/transactions/presentation/cubits/balance_visibility_cubit.dart';
 import 'package:finance_frontend/features/transactions/presentation/views/report_and_anlytics_wrapper.dart';
 import 'package:finance_frontend/features/transactions/presentation/views/transactions_view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -48,6 +50,22 @@ class _HomeState extends State<Home> {
             color: theme.colorScheme.onPrimary,
           ),
         ),
+        actions: [
+          BlocBuilder<BalanceVisibilityCubit, bool>(
+            builder: (context, isVisible) {
+              return IconButton(
+                tooltip: isVisible ? 'Hide balances' : 'Show balances',
+                icon: Icon(
+                  isVisible
+                      ? Icons.visibility_rounded
+                      : Icons.visibility_off_rounded,
+                ),
+                onPressed: () =>
+                    context.read<BalanceVisibilityCubit>().toggle(),
+              );
+            },
+          ),
+        ],
       ),
 
       body: _widgetOptions.elementAt(_selectedIndex),
