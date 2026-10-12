@@ -49,6 +49,12 @@ dependencies:
   cupertino_icons: ^1.0.8
   bloc_concurrency: ^0.3.0
 
+  # Data export / import
+  path_provider: ^2.1.5
+  share_plus: ^10.1.4
+  file_picker: ^8.3.7
+  archive: ^3.6.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

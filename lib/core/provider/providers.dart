@@ -1,3 +1,5 @@
+import 'package:finance_frontend/features/settings/data/services/hive_export_import_service.dart';
+import 'package:finance_frontend/features/settings/presentation/cubits/data_transfer_cubit.dart';
 import 'package:finance_frontend/features/transactions/presentation/cubits/report_analytics_cubit.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -138,4 +140,16 @@ final budgetFormBlocProvider = Provider<BudgetFormBloc>((ref) {
 final reportAnalyticsCubitProvider = Provider<ReportAnalyticsCubit>((ref) {
   final service = ref.read(transactionServiceProvider);
   return ReportAnalyticsCubit(service);
+});
+
+/// HiveExportImportService
+final hiveExportImportServiceProvider = Provider<HiveExportImportService>((
+  ref,
+) {
+  return HiveExportImportService();
+});
+
+/// DataTransferCubit
+final dataTransferCubitProvider = Provider<DataTransferCubit>((ref) {
+  return DataTransferCubit(ref.read(hiveExportImportServiceProvider));
 });
