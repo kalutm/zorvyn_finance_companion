@@ -221,7 +221,7 @@ class _TransactionsViewState extends State<TransactionsView> {
                           transactions: transactions,
                           selectedAccount: selectedAccount,
                           showAll: _showAllRecent,
-                          isObscured: isObscured,
+                          isObscured: false, // Recent Activity amounts are always visible
                           onToggle: () {
                             setState(() {
                               _showAllRecent = !_showAllRecent;
